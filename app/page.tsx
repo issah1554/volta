@@ -9,11 +9,11 @@ import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
 export default function HomePage() {
-  const mapRef = useRef<any>(null); // Leaflet map ref
+  const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
   const [sharing, setSharing] = useState(false);
-
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
+
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
 
   // Connect to Socket.IO
@@ -25,26 +25,23 @@ export default function HomePage() {
       if (!mapRef.current) return;
 
       locations.forEach((loc) => {
-        // Update existing marker
         if (markersRef.current[loc.userId]) {
           markersRef.current[loc.userId].setLatLng([loc.lat, loc.lng]);
         } else {
-          // Add new marker
-          const marker = mapRef.current?.L.marker([loc.lat, loc.lng])
+          const marker = mapRef.current.L.marker([loc.lat, loc.lng])
             .addTo(mapRef.current.map)
             .bindPopup(`User: ${loc.userId}`);
           markersRef.current[loc.userId] = marker;
-
         }
       });
     });
 
     return () => {
-      socket.disconnect(); // cleanup
+      socket.disconnect();
     };
   }, []);
 
-  // Share location at interval
+  // Share location
   useEffect(() => {
     if (!sharing) return;
 
@@ -67,10 +64,7 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
-      <ControlsBox
-        onShareToggle={() => setSharing((prev) => !prev)}
-        sharing={sharing}
-      />
+      <ControlsBox onShareToggle={() => setSharing((prev) => !prev)} sharing={sharing} />
       <InfoPanel />
       <Legend />
     </div>

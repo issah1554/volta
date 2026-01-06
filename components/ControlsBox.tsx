@@ -1,7 +1,6 @@
 'use client';
 
-import Select2 from "./ui/Select2";
-
+import Select2 from "./ui/Select2"; // leave it unfunctional
 const locations = [
     { label: "Main Gate", value: "main_gate" },
     { label: "Library", value: "library" },
@@ -20,16 +19,15 @@ export default function ControlsBox({ onShareToggle, sharing }: ControlsBoxProps
             <Select2
                 options={locations}
                 radius="full"
-                placeholder="Choose a routes"
+                placeholder="Choose a route"
             />
 
             <button
                 onClick={onShareToggle}
-                className={`bg-primary-500/10 hover:bg-primary-500/30 p-2 border-2 border-primary-400 rounded-full transition flex items-center gap-2 text-primary ${sharing ? "bg-red-500/20 border-red-500 text-red-600" : ""
-                    }`}
+                className={`${sharing ? "border-accent-400 bg-accent-500/10 hover:bg-accent-500/30  text-accent" : "border-primary-400 bg-primary-500/10 hover:bg-primary-500/30  text-primary"}  p-2 border-2  rounded-full transition flex items-center gap-2`}
             >
                 <i className="bi bi-share" />
-                {sharing ? "Stop Sharing" : "Share"}
+                {sharing ? "Sharing" : "Share"}
             </button>
         </div>
     );
