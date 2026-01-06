@@ -1,22 +1,24 @@
-import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
-import TopNav from "@/components/layout/TopNavBar";
 
-export const metadata = {
-  title: "About IssaH",
-  description: "Demo App",
-  icons: {
-    icon: "/5-circle-fill.svg", //
-  },
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className="scrollbar-thin scrollbar-thumb-primary-500  ">
-      <body className="antialiased ">
-        <TopNav />
-        {children}
-      </body>
+    <html lang="en">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css"
+        />
+
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
