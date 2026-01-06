@@ -183,29 +183,13 @@ export default function Select2({
                         if (!multiple) setInputValue("");
                     }}
                 />
-
-                {inputValue && (
-                    <button
-                        type="button"
-                        onClick={clearInput}
-                        className="
-                            absolute right-2 top-1/2 -translate-y-1/2
-                            text-main/60 hover:text-main
-                            text-sm leading-none
-                        "
-                        aria-label="Clear"
-                    >
-                        <i className="bi bi-x-lg text-danger"></i>
-                    </button>
-                )}
             </div>
 
             {showOptions && (
                 <div
                     className={`
                         absolute z-50 mt-1 w-full max-h-44 overflow-y-auto
-                        border-2 border-main-300 bg-main-200
-                        ${radiusStyles[radius]}
+                        border-2 border-main-300 bg-main-200 rounded-md
                     `}
                 >
                     {filteredOptions.length === 0 ? (
