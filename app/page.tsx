@@ -24,17 +24,21 @@ export default function HomePage() {
     socket.on("locationUpdate", (locations: LocationData[]) => {
       if (!mapRef.current) return;
 
+      const { L, map, pulsingIcon } = mapRef.current;
+
       locations.forEach((loc) => {
         if (markersRef.current[loc.userId]) {
           markersRef.current[loc.userId].setLatLng([loc.lat, loc.lng]);
         } else {
-          const marker = mapRef.current.L.marker([loc.lat, loc.lng])
-            .addTo(mapRef.current.map)
+          const marker = L.marker([loc.lat, loc.lng], { icon: pulsingIcon })
+            .addTo(map)
             .bindPopup(`User: ${loc.userId}`);
+
           markersRef.current[loc.userId] = marker;
         }
       });
     });
+
 
     return () => {
       socket.disconnect();

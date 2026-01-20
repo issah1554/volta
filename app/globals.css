@@ -477,3 +477,22 @@
 .animate-slideIn {
   animation: slideIn 0.2s ease-out forwards;
 }
+
+.pulse-marker {
+  width: 20px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #0956c9;
+  /* blue center */
+  box-shadow: 0 0 0 0 #0956c94d;
+  /* transparent blue ring */
+  animation: l2 1s infinite linear;
+  position: relative;
+}
+
+@keyframes l2 {
+  100% {
+    box-shadow: 0 0 0 30px #0000;
+    /* fade-out ring */
+  }
+}

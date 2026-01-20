@@ -14,7 +14,13 @@ export default function MapView({ mapRef }: MapViewProps) {
 
             const map = L.map("map", { zoomControl: false }).setView([-6.7924, 39.2083], 17);
 
-            if (mapRef) mapRef.current = { map, L };
+            const pulsingIcon = L.divIcon({
+                className: "pulse-marker",
+                iconSize: [16, 16],
+                iconAnchor: [8, 8],   // center the icon
+            });
+
+            if (mapRef) mapRef.current = { map, L, pulsingIcon };
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "&copy; OpenStreetMap contributors",
@@ -35,8 +41,12 @@ export default function MapView({ mapRef }: MapViewProps) {
             new locateControl({ position: "topright" }).addTo(map);
 
             map.on("locationfound", (e: any) => {
-                L.marker(e.latlng).addTo(map).bindPopup("You are here").openPopup();
+                L.marker(e.latlng, { icon: pulsingIcon })
+                    .addTo(map)
+                    .bindPopup("You are here")
+                    .openPopup();
             });
+
         })();
     }, [mapRef]);
 
