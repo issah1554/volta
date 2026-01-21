@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import MapView from "@/components/MapView";
@@ -12,9 +12,15 @@ export default function HomePage() {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
   const [sharing, setSharing] = useState(false);
+  const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
 
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
+
+  // Keep sharingRef in sync with state
+  useEffect(() => {
+    sharingRef.current = sharing;
+  }, [sharing]);
 
   // Connect to Socket.IO
   useEffect(() => {
@@ -26,7 +32,31 @@ export default function HomePage() {
 
       const { L, map, pulsingIcon } = mapRef.current;
 
+      // ---- 1. Build set of active userIds from payload ----
+      const activeIds = new Set(locations.map((l) => l.userId));
+
+      // ---- 2. Remove markers for users that are no longer in activeIds ----
+      Object.entries(markersRef.current).forEach(([id, marker]) => {
+        if (!activeIds.has(id)) {
+          map.removeLayer(marker);
+          delete markersRef.current[id];
+        }
+      });
+
+      // ---- 3. Upsert markers for all locations in payload ----
       locations.forEach((loc) => {
+        const isMe = loc.userId === userId.current;
+
+        // If it's me and I'm not sharing anymore, ensure my marker is gone
+        if (isMe && !sharingRef.current) {
+          const myMarker = markersRef.current[loc.userId];
+          if (myMarker) {
+            map.removeLayer(myMarker);
+            delete markersRef.current[loc.userId];
+          }
+          return; // do not recreate marker
+        }
+
         if (markersRef.current[loc.userId]) {
           markersRef.current[loc.userId].setLatLng([loc.lat, loc.lng]);
         } else {
@@ -39,16 +69,31 @@ export default function HomePage() {
       });
     });
 
-
     return () => {
+      socket.off("locationUpdate");
       socket.disconnect();
     };
   }, []);
 
-  // Share location
+  // Share / stop sharing location
   useEffect(() => {
-    if (!sharing) return;
+    // When turning OFF sharing: remove ONLY my marker and stop sending
+    if (!sharing) {
+      if (mapRef.current) {
+        const { map } = mapRef.current;
+        const myMarker = markersRef.current[userId.current];
 
+        if (myMarker) {
+          map.removeLayer(myMarker);
+          delete markersRef.current[userId.current];
+        }
+      }
+
+      socketRef.current?.emit("stopSharing", { userId: userId.current });
+      return;
+    }
+
+    // When turning ON sharing: start sending positions
     const interval = setInterval(() => {
       if (!navigator.geolocation) return;
 
@@ -68,7 +113,10 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
-      <ControlsBox onShareToggle={() => setSharing((prev) => !prev)} sharing={sharing} />
+      <ControlsBox
+        onShareToggle={() => setSharing((prev) => !prev)}
+        sharing={sharing}
+      />
       <InfoPanel />
       <Legend />
     </div>

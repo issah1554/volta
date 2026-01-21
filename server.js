@@ -12,27 +12,50 @@ const io = new Server(server, {
   },
 });
 
-// Store latest location for each user
-let locations = [];
+// userId -> latest location object
+const locations = new Map();
+// socket.id -> userId (for cleanup on disconnect)
+const socketToUser = new Map();
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
   // Send current locations to new client
-  socket.emit("locationUpdate", locations);
+  socket.emit(
+    "locationUpdate",
+    Array.from(locations.values())
+  );
 
   // Receive location updates from clients
   socket.on("sendLocation", (data) => {
-    const idx = locations.findIndex((l) => l.userId === data.userId);
-    if (idx >= 0) locations[idx] = data;
-    else locations.push(data);
+    const { userId } = data;
+
+    locations.set(userId, data);
+    socketToUser.set(socket.id, userId);
 
     // Broadcast updated locations to all clients
-    io.emit("locationUpdate", locations);
+    io.emit("locationUpdate", Array.from(locations.values()));
+  });
+
+  // Client explicitly stops sharing
+  socket.on("stopSharing", ({ userId }) => {
+    locations.delete(userId);
+    // Optionally clear mapping if this socket was that user
+    if (socketToUser.get(socket.id) === userId) {
+      socketToUser.delete(socket.id);
+    }
+
+    io.emit("locationUpdate", Array.from(locations.values()));
   });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
+    const userId = socketToUser.get(socket.id);
+    if (userId) {
+      locations.delete(userId);
+      socketToUser.delete(socket.id);
+      io.emit("locationUpdate", Array.from(locations.values()));
+    }
   });
 });
 
