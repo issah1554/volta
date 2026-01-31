@@ -24,7 +24,12 @@ export default function HomePage() {
 
   // Connect to Socket.IO
   useEffect(() => {
-    const socket = socketIOClient("http://localhost:3001");
+    const socket = socketIOClient(
+      process.env.NEXT_PUBLIC_SOCKET_URL!,
+      {
+        path: process.env.NEXT_PUBLIC_SOCKET_PATH!,
+      }
+    );
     socketRef.current = socket;
 
     socket.on("locationUpdate", (locations: LocationData[]) => {
