@@ -88,10 +88,10 @@ export default function MapView({ mapRef }: MapViewProps) {
                 onAdd: function () {
                     const div = L.DomUtil.create("div", "leaflet-bar leaflet-control");
                     div.innerHTML = `
-            <a href="#" title="Locate Me" class="px-2 py-1 text-gray-800 hover:bg-gray-200">
-              <i class="bi bi-geo-alt-fill"></i>
-            </a>
-          `;
+                        <a href="#" title="Locate Me" class="px-2 py-1 text-gray-800 hover:bg-gray-200">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        </a>
+                    `;
 
                     // avoid map drag/zoom events when clicking button
                     L.DomEvent.disableClickPropagation(div);
