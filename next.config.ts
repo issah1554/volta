@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  basePath: "/volta/app",
 };
 
 export default nextConfig;
-
-module.exports = {
-  basePath: "/volta/app",
-};
