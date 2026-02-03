@@ -3,12 +3,13 @@
 interface SearchBoxProps {
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
+    containerClassName?: string;
 }
 
-export default function SearchBox({ isSidebarOpen, onToggleSidebar }: SearchBoxProps) {
+export default function SearchBox({ isSidebarOpen, onToggleSidebar, containerClassName }: SearchBoxProps) {
 
     return (
-        <div className="absolute left-3 right-3 top-3 z-1000 sm:left-5 sm:right-auto sm:top-5">
+        <div className={`absolute left-3 right-3 top-3 z-1000 sm:left-5 sm:right-auto sm:top-5 ${containerClassName ?? ""}`}>
             {/* Responsive search box */}
             <div
                 className="

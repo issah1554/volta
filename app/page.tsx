@@ -141,6 +141,7 @@ export default function HomePage() {
       <SearchBox
         isSidebarOpen={isLeftOpen}
         onToggleSidebar={() => setIsLeftOpen((prev) => !prev)}
+        containerClassName={activePanel ? "z-[1200]" : ""}
       />
       <InfoPanel />
     </div>

@@ -13,10 +13,8 @@ export default function MainPanel({ title, onClose }: MainPanelProps) {
           w-full max-w-full
           sm:w-104 sm:max-w-[calc(100vw-40px)]
           h-full
-           border border-white/30 bg-white/80
-          shadow-xl backdrop-blur-sm
-        "
-            >
+          border border-white/30 bg-white/80 pt-16
+          shadow-xl backdrop-blur-sm ">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-main/20">
                     <div className="text-sm font-semibold capitalize text-main-800">
                         {title}
