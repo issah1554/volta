@@ -6,6 +6,7 @@ import SearchBox from "@/components/SearchBox";
 import InfoPanel from "@/components/InfoPanel";
 import RightSideBar from "@/components/layout/RightSideBar";
 import LeftSideBar from "@/components/layout/LeftSideBar";
+import MainPanel from "@/components/layout/MainPanel";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -14,6 +15,7 @@ export default function HomePage() {
   const markersRef = useRef<Record<string, any>>({});
   const [sharing, setSharing] = useState(false);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<string | null>(null);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
 
@@ -121,7 +123,21 @@ export default function HomePage() {
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
       <RightSideBar mapRef={mapRef} />
-      <LeftSideBar isOpen={isLeftOpen} onClose={() => setIsLeftOpen(false)} />
+      <LeftSideBar
+        isOpen={isLeftOpen}
+        onClose={() => setIsLeftOpen(false)}
+        onSelect={(label) => {
+          if (["users", "routes", "nodes"].includes(label)) {
+            setActivePanel(label);
+            setIsLeftOpen(false);
+          } else {
+            setActivePanel(null);
+          }
+        }}
+      />
+      {activePanel && (
+        <MainPanel title={activePanel} onClose={() => setActivePanel(null)} />
+      )}
       <SearchBox
         isSidebarOpen={isLeftOpen}
         onToggleSidebar={() => setIsLeftOpen((prev) => !prev)}

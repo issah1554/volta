@@ -3,6 +3,7 @@
 interface LeftSideBarProps {
     isOpen: boolean;
     onClose: () => void;
+    onSelect: (label: string) => void;
 }
 
 const menuItems = [
@@ -13,7 +14,7 @@ const menuItems = [
     { label: "routes", icon: "bi-signpost-split-fill" },
 ];
 
-export default function LeftSideBar({ isOpen, onClose }: LeftSideBarProps) {
+export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarProps) {
     return (
         <>
             {isOpen && (
@@ -58,6 +59,10 @@ export default function LeftSideBar({ isOpen, onClose }: LeftSideBarProps) {
                             key={item.label}
                             href="#"
                             className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-main-800 transition hover:bg-white/80"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                onSelect(item.label);
+                            }}
                         >
                             <i className={`bi ${item.icon} text-base text-main-700`} />
                             <span className="ml-3 capitalize">{item.label}</span>
