@@ -1,13 +1,18 @@
-export type RouteStatus = "on-time" | "delayed" | "critical" | "idle";
+export type RouteStatus = "active" | "inactive";
+
+export type RouteNode = {
+  seqNo: number;
+  name: string;
+};
 
 export type RouteRow = {
   id: string;
+  code?: string;
   name: string;
   status: RouteStatus;
-  progress: number;
-  eta: string;
-  driver: string;
-  lastUpdate: string;
+  createdBy?: string;
+  nodes: RouteNode[];
+  updatedAt: string;
 };
 
 export interface RoutesProps {
@@ -19,52 +24,66 @@ export interface RoutesProps {
 const defaultRoutes: RouteRow[] = [
   {
     id: "r-01",
+    code: "PL-001",
     name: "Port Line",
-    status: "on-time",
-    progress: 78,
-    eta: "12 min",
-    driver: "Amina Yusuf",
-    lastUpdate: "1 min ago",
+    status: "active",
+    createdBy: "Amina Yusuf",
+    updatedAt: "2024-05-09",
+    nodes: [
+      { seqNo: 1, name: "Alpha Station" },
+      { seqNo: 2, name: "Port Terminal" },
+      { seqNo: 3, name: "Dock 4" },
+    ],
   },
   {
     id: "r-02",
+    code: "WL-014",
     name: "Warehouse Loop",
-    status: "delayed",
-    progress: 42,
-    eta: "31 min",
-    driver: "Tomas Reed",
-    lastUpdate: "4 min ago",
+    status: "active",
+    createdBy: "Tomas Reed",
+    updatedAt: "2024-05-10",
+    nodes: [
+      { seqNo: 1, name: "Warehouse Junction" },
+      { seqNo: 2, name: "Depot North" },
+      { seqNo: 3, name: "Switchboard" },
+      { seqNo: 4, name: "Alpha Station" },
+    ],
   },
   {
     id: "r-03",
+    code: "NR-220",
     name: "North Ridge",
-    status: "on-time",
-    progress: 64,
-    eta: "18 min",
-    driver: "Zuri Mwita",
-    lastUpdate: "7 min ago",
+    status: "inactive",
+    createdBy: "Zuri Mwita",
+    updatedAt: "2024-04-26",
+    nodes: [
+      { seqNo: 1, name: "East Ridge Landmark" },
+      { seqNo: 2, name: "North Gate" },
+    ],
   },
   {
     id: "r-04",
+    code: "CC-104",
     name: "City Center",
-    status: "critical",
-    progress: 23,
-    eta: "46 min",
-    driver: "Noah Santos",
-    lastUpdate: "20 min ago",
+    status: "active",
+    createdBy: "Noah Santos",
+    updatedAt: "2024-05-11",
+    nodes: [
+      { seqNo: 1, name: "Central Station" },
+      { seqNo: 2, name: "Market Junction" },
+      { seqNo: 3, name: "Library Stop" },
+    ],
   },
 ];
 
 const statusPill: Record<RouteStatus, string> = {
-  "on-time": "bg-success-50 text-success-700 border-success-200",
-  delayed: "bg-warning-50 text-warning-700 border-warning-200",
-  critical: "bg-danger-50 text-danger-700 border-danger-200",
-  idle: "bg-secondary-50 text-secondary-700 border-secondary-200",
+  active: "bg-success-50 text-success-700 border-success-200",
+  inactive: "bg-secondary-50 text-secondary-700 border-secondary-200",
 };
 
 export default function Routes({
-  title = "Route control",
-  subtitle = "Track route progress, ETA, and dispatch status.",
+  title = "Route definitions",
+  subtitle = "Routes composed of ordered nodes and assignments.",
   routes = defaultRoutes,
 }: RoutesProps) {
   return (
@@ -90,8 +109,8 @@ export default function Routes({
             type="button"
             className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-primary-700"
           >
-            <i className="bi bi-broadcast" />
-            Live map
+            <i className="bi bi-diagram-3" />
+            Add nodes
           </button>
         </div>
       </header>
@@ -105,25 +124,21 @@ export default function Routes({
             >
               <div>
                 <p className="text-sm font-semibold text-main-900">{route.name}</p>
-                <p className="text-xs text-main-500">Driver: {route.driver}</p>
+                <p className="text-xs text-main-500">
+                  {route.code ? `Code: ${route.code}` : "No code"}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-main-500">Progress</p>
-                <div className="mt-1 h-2 rounded-full bg-main-100">
-                  <div
-                    className="h-full rounded-full bg-primary-500"
-                    style={{ width: `${Math.min(100, Math.max(0, route.progress))}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-[11px] text-main-500">{route.progress}%</p>
+                <p className="text-xs text-main-500">Created by</p>
+                <p className="text-sm text-main-800">{route.createdBy ?? "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-main-500">ETA</p>
-                <p className="text-sm text-main-800">{route.eta}</p>
+                <p className="text-xs text-main-500">Nodes</p>
+                <p className="text-sm text-main-800">{route.nodes.length}</p>
               </div>
               <div>
-                <p className="text-xs text-main-500">Last update</p>
-                <p className="text-sm text-main-800">{route.lastUpdate}</p>
+                <p className="text-xs text-main-500">Updated</p>
+                <p className="text-sm text-main-800">{route.updatedAt}</p>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusPill[route.status]}`}>
@@ -136,6 +151,20 @@ export default function Routes({
                 >
                   <i className="bi bi-three-dots-vertical text-sm" />
                 </button>
+              </div>
+              <div className="route-nodes col-span-full rounded-lg border border-main-100 bg-white/70 px-3 py-2 text-xs text-main-600">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-main-500">Ordered nodes</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {route.nodes.map((node) => (
+                    <span
+                      key={`${route.id}-${node.seqNo}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-main-200 bg-white px-2 py-1 text-[11px] text-main-700"
+                    >
+                      <span className="text-[10px] text-main-400">{node.seqNo}</span>
+                      {node.name}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
@@ -154,6 +183,10 @@ export default function Routes({
         @container routes-panel (min-width: 720px) {
           .route-row {
             grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 0.7fr)) minmax(0, 0.5fr);
+          }
+
+          .route-nodes {
+            grid-column: 1 / -1;
           }
         }
       `}</style>
