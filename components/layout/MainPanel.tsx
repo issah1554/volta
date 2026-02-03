@@ -1,11 +1,14 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 interface MainPanelProps {
     title: string;
     onClose: () => void;
+    children?: ReactNode;
 }
 
-export default function MainPanel({ title, onClose }: MainPanelProps) {
+export default function MainPanel({ title, onClose, children }: MainPanelProps) {
     return (
         <div className="absolute left-0 right-0 top-0 z-1100 h-screen sm:left-0 sm:right-auto">
             <div
@@ -29,7 +32,7 @@ export default function MainPanel({ title, onClose }: MainPanelProps) {
                     </button>
                 </div>
                 <div className="px-4 py-4 text-sm text-main-700">
-                    Add content here.
+                    {children ?? "Add content here."}
                 </div>
             </div>
         </div>

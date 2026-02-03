@@ -1,18 +1,42 @@
 "use client";
 
-import { RefObject } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 interface RightSideBarProps {
   onShareToggle?: () => void;
   sharing?: boolean;
   mapRef?: RefObject<any>;
+  isLoggedIn?: boolean;
+  onLoginClick?: () => void;
+  onRegisterClick?: () => void;
+  onLogoutClick?: () => void;
 }
 
 
-export default function RightSideBar({ mapRef, sharing, onShareToggle }: RightSideBarProps) {
+export default function RightSideBar({
+  mapRef,
+  sharing,
+  onShareToggle,
+  isLoggedIn,
+  onLoginClick,
+  onRegisterClick,
+  onLogoutClick,
+}: RightSideBarProps) {
   const handleZoomIn = () => mapRef?.current?.map?.zoomIn?.();
   const handleZoomOut = () => mapRef?.current?.map?.zoomOut?.();
   const handleLocate = () => mapRef?.current?.startWatching?.();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const baseBtn =
     "grid h-10 w-10 place-items-center bg-white text-slate-800 shadow-md ring-1 ring-slate-200 hover:bg-slate-50 active:translate-y-px active:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50";
@@ -99,17 +123,62 @@ export default function RightSideBar({ mapRef, sharing, onShareToggle }: RightSi
       </a>
 
 
-      {/* Query (disabled) */}
-      <a
-        className={`${baseBtn} rounded-xl`}
-        href="#"
-        aria-label="Query features"
-        title="Account"
-        aria-disabled="true"
-        onClick={(e) => e.preventDefault()}
-      >
-        <i className="bi bi-person text-lg" />
-      </a>
+      {/* Account */}
+      <div className="relative" ref={accountRef}>
+        <button
+          type="button"
+          className={`${baseBtn} rounded-xl`}
+          aria-label="Account"
+          title="Account"
+          onClick={() => setAccountOpen((v) => !v)}
+        >
+          <i className="bi bi-person text-lg" />
+        </button>
+        {accountOpen && (
+          <div className="absolute right-full top-1/2 mr-2 w-40 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 shadow-xl backdrop-blur-md">
+            {!isLoggedIn ? (
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-main-800 transition hover:bg-white/80"
+                  onClick={() => {
+                    setAccountOpen(false);
+                    onLoginClick?.();
+                  }}
+                >
+                  <i className="bi bi-box-arrow-in-right text-base text-main-700" />
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-main-800 transition hover:bg-white/80"
+                  onClick={() => {
+                    setAccountOpen(false);
+                    onRegisterClick?.();
+                  }}
+                >
+                  <i className="bi bi-person-plus-fill text-base text-main-700" />
+                  Register
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-main-800 transition hover:bg-white/80"
+                  onClick={() => {
+                    setAccountOpen(false);
+                    onLogoutClick?.();
+                  }}
+                >
+                  <i className="bi bi-box-arrow-right text-base text-main-700" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

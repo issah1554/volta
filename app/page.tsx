@@ -7,6 +7,8 @@ import InfoPanel from "@/components/InfoPanel";
 import RightSideBar from "@/components/layout/RightSideBar";
 import LeftSideBar from "@/components/layout/LeftSideBar";
 import MainPanel from "@/components/layout/MainPanel";
+import LoginForm from "@/components/auth/LoginForm";
+import RegisterForm from "@/components/auth/RegisterForm";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -15,7 +17,10 @@ export default function HomePage() {
   const markersRef = useRef<Record<string, any>>({});
   const [sharing, setSharing] = useState(false);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<
+    "users" | "routes" | "nodes" | "login" | "register" | null
+  >(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
 
@@ -122,13 +127,25 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
-      <RightSideBar mapRef={mapRef} />
+      <RightSideBar
+        mapRef={mapRef}
+        isLoggedIn={isLoggedIn}
+        onLoginClick={() => {
+          setIsLeftOpen(false);
+          setActivePanel("login");
+        }}
+        onRegisterClick={() => {
+          setIsLeftOpen(false);
+          setActivePanel("register");
+        }}
+        onLogoutClick={() => setIsLoggedIn(false)}
+      />
       <LeftSideBar
         isOpen={isLeftOpen}
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
           if (["users", "routes", "nodes"].includes(label)) {
-            setActivePanel(label);
+            setActivePanel(label as "users" | "routes" | "nodes");
             setIsLeftOpen(false);
           } else {
             setActivePanel(null);
@@ -136,7 +153,29 @@ export default function HomePage() {
         }}
       />
       {activePanel && (
-        <MainPanel title={activePanel} onClose={() => setActivePanel(null)} />
+        <MainPanel title={activePanel} onClose={() => setActivePanel(null)}>
+          {activePanel === "login" || activePanel === "register" ? (
+            activePanel === "login" ? (
+              <LoginForm
+                onSubmit={() => {
+                  setIsLoggedIn(true);
+                  setActivePanel(null);
+                }}
+              />
+            ) : (
+              <RegisterForm
+                onSubmit={() => {
+                  setIsLoggedIn(true);
+                  setActivePanel(null);
+                }}
+              />
+            )
+          ) : (
+            <div className="text-sm text-main-700">
+              Add content here.
+            </div>
+          )}
+        </MainPanel>
       )}
       <SearchBox
         isSidebarOpen={isLeftOpen}
