@@ -118,10 +118,11 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
-      <RightSideBar mapRef={mapRef} />
-      <ControlsBox
+      <RightSideBar mapRef={mapRef}
         onShareToggle={() => setSharing((prev) => !prev)}
         sharing={sharing}
+      />
+      <ControlsBox
       />
       <InfoPanel />
     </div>

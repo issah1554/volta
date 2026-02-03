@@ -3,10 +3,13 @@
 import { RefObject } from "react";
 
 interface RightSideBarProps {
+  onShareToggle?: () => void;
+  sharing?: boolean;
   mapRef?: RefObject<any>;
 }
 
-export default function RightSideBar({ mapRef }: RightSideBarProps) {
+
+export default function RightSideBar({ mapRef, sharing, onShareToggle }: RightSideBarProps) {
   const handleZoomIn = () => mapRef?.current?.map?.zoomIn?.();
   const handleZoomOut = () => mapRef?.current?.map?.zoomOut?.();
   const handleLocate = () => mapRef?.current?.startWatching?.();
@@ -83,10 +86,14 @@ export default function RightSideBar({ mapRef }: RightSideBarProps) {
 
       {/* Share */}
       <a
-        className={`${baseBtn} rounded-xl`}
+        className={`${baseBtn} rounded-xl ${sharing ? "border-accent-400 bg-accent-500/10 hover:bg-accent-500/30  text-accent" : ""}`}
         href="#"
         aria-label="Share"
         title="Share"
+        onClick={(e) => {
+          e.preventDefault();
+          onShareToggle?.();
+        }}
       >
         <i className="bi bi-share-fill text-lg" />
       </a>

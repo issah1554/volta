@@ -1,34 +1,40 @@
-'use client';
+"use client";
 
-import Select2 from "./ui/Select2"; // leave it unfunctional
-const locations = [
-    { label: "Main Gate", value: "main_gate" },
-    { label: "Library", value: "library" },
-    { label: "Lecture Hall 1", value: "lecture_hall_1" },
-    { label: "Cafeteria", value: "cafeteria" },
-];
+import { useState } from "react";
 
-interface ControlsBoxProps {
-    onShareToggle: () => void;
-    sharing: boolean;
-}
+export default function ControlsBox() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-export default function ControlsBox({ onShareToggle, sharing }: ControlsBoxProps) {
     return (
-        <div className="absolute top-5 left-5 z-1000 bg-white/50 border-2 border-gray-200 backdrop-blur-sm px-4 py-3 rounded-full shadow-xl w-100 max-w-[calc(100vw-40px)] flex items-center gap-3">
-            <Select2
-                options={locations}
-                radius="full"
-                placeholder="Choose a route"
-            />
-
-            <button
-                onClick={onShareToggle}
-                className={`${sharing ? "border-accent-400 bg-accent-500/10 hover:bg-accent-500/30  text-accent" : "border-primary-400 bg-primary-500/10 hover:bg-primary-500/30  text-primary"}  p-2 border-2  rounded-full transition flex items-center gap-2`}
+        <div className="absolute left-5 top-5 z-1000">
+            {/* Search box with embedded toggle */}
+            <div
+                className="flex w-104 max-w-[calc(100vw-40px)] items-center gap-2 rounded-full
+                border border-gray-200 bg-white/80 px-2 py-1 shadow-xl backdrop-blur-sm
+                focus-within:ring-2 focus-within:ring-accent"
             >
-                <i className="bi bi-share" />
-                {sharing ? "Sharing" : "Share"}
-            </button>
+
+                {/* Sidebar Toggle (inside search) */}
+                <button
+                    type="button"
+                    aria-label="Toggle sidebar"
+                    aria-expanded={isSidebarOpen}
+                    onClick={() => setIsSidebarOpen((v) => !v)}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-white/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+                    <i className={`bi ${isSidebarOpen ? "bi-x-lg" : "bi-list"} text-base`} />
+                </button>
+
+                {/* Input */}
+                <input
+                    type="search"
+                    placeholder="Search for a route"
+                    className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none"
+                />
+                
+                {/* Search Icon */}
+                <i className="bi bi-search text-gray-500 px-2" />
+
+            </div>
         </div>
     );
 }
