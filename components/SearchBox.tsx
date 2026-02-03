@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+interface SearchBoxProps {
+    isSidebarOpen: boolean;
+    onToggleSidebar: () => void;
+}
 
-export default function SearchBox() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+export default function SearchBox({ isSidebarOpen, onToggleSidebar }: SearchBoxProps) {
 
     return (
         <div className="absolute left-3 right-3 top-3 z-1000 sm:left-5 sm:right-auto sm:top-5">
@@ -23,7 +25,7 @@ export default function SearchBox() {
                     type="button"
                     aria-label="Toggle sidebar"
                     aria-expanded={isSidebarOpen}
-                    onClick={() => setIsSidebarOpen((v) => !v)}
+                    onClick={onToggleSidebar}
                     className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-white/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                 >
                     <i className={`bi ${isSidebarOpen ? "bi-x-lg" : "bi-list"} text-base`} />

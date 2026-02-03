@@ -5,6 +5,7 @@ import MapView from "@/components/MapView";
 import SearchBox from "@/components/SearchBox";
 import InfoPanel from "@/components/InfoPanel";
 import RightSideBar from "@/components/layout/RightSideBar";
+import LeftSideBar from "@/components/layout/LeftSideBar";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -12,6 +13,7 @@ export default function HomePage() {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
   const [sharing, setSharing] = useState(false);
+  const [isLeftOpen, setIsLeftOpen] = useState(false);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
 
@@ -118,11 +120,11 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
-      <RightSideBar mapRef={mapRef}
-        onShareToggle={() => setSharing((prev) => !prev)}
-        sharing={sharing}
-      />
+      <RightSideBar mapRef={mapRef} />
+      <LeftSideBar isOpen={isLeftOpen} onClose={() => setIsLeftOpen(false)} />
       <SearchBox
+        isSidebarOpen={isLeftOpen}
+        onToggleSidebar={() => setIsLeftOpen((prev) => !prev)}
       />
       <InfoPanel />
     </div>
