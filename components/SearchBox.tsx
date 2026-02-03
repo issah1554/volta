@@ -9,16 +9,16 @@ interface SearchBoxProps {
 export default function SearchBox({ isSidebarOpen, onToggleSidebar, containerClassName }: SearchBoxProps) {
 
     return (
-        <div className={`absolute left-3 right-3 top-3 z-1000 sm:left-5 sm:right-auto sm:top-5 ${containerClassName ?? ""}`}>
+        <div className={`absolute left-3 right-3 top-3 z-1200 sm:left-5 sm:right-auto sm:top-5 ${containerClassName ?? ""}`}>
             {/* Responsive search box */}
             <div
                 className="
           flex items-center gap-2 rounded-full
-          border border-gray-200 bg-white/80 shadow-xl backdrop-blur-sm
+          border border-gray-200 bg-white/80 shadow backdrop-blur-sm
           px-2 py-1
           w-full max-w-full
           sm:w-104 sm:max-w-[calc(100vw-40px)]
-          focus-within:ring-2 focus-within:ring-accent
+          focus-within:ring focus-within:ring-main-400
         "
             >
                 {/* Sidebar Toggle (inside search) */}

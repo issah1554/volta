@@ -26,7 +26,7 @@ export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarPr
                 />
             )}
             <aside
-                className={`absolute left-0 top-0 z-1100 h-full w-64 border-r border-white/30 bg-white/70 shadow-xl backdrop-blur-md transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"
+                className={`absolute left-0 top-0 z-1300 h-full w-64 border-r border-white/30 bg-white/70 shadow-xl backdrop-blur-md transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
                 aria-hidden={!isOpen}
             >
