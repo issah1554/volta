@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import MapView from "@/components/MapView";
-import ControlsBox from "@/components/ControlsBox";
+import SearchBox from "@/components/SearchBox";
 import InfoPanel from "@/components/InfoPanel";
 import RightSideBar from "@/components/layout/RightSideBar";
 import socketIOClient from "socket.io-client";
@@ -122,7 +122,7 @@ export default function HomePage() {
         onShareToggle={() => setSharing((prev) => !prev)}
         sharing={sharing}
       />
-      <ControlsBox
+      <SearchBox
       />
       <InfoPanel />
     </div>
