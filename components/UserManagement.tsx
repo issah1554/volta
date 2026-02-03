@@ -18,6 +18,7 @@ export interface UserManagementProps {
   title?: string;
   subtitle?: string;
   users?: UserRow[];
+  onViewProfile?: (user: UserRow) => void;
 }
 
 const defaultUsers: UserRow[] = [
@@ -60,6 +61,7 @@ const statusPill: Record<UserStatus, string> = {
 
 export default function UserManagement({
   users = defaultUsers,
+  onViewProfile,
 }: UserManagementProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -95,7 +97,7 @@ export default function UserManagement({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div className="grid gap-2">
             {users.map((user) => (
               <div
                 key={user.id}
@@ -130,6 +132,10 @@ export default function UserManagement({
                       <button
                         type="button"
                         className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-main-700 transition hover:bg-main-50"
+                        onClick={() => {
+                          onViewProfile?.(user);
+                          setOpenMenuId(null);
+                        }}
                       >
                         <i className="bi bi-person" />
                         View profile

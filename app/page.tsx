@@ -9,6 +9,9 @@ import LeftSideBar from "@/components/layout/LeftSideBar";
 import MainPanel from "@/components/layout/MainPanel";
 import Dashboard from "@/components/Dashboard";
 import UserManagement from "@/components/UserManagement";
+import UserProfile from "@/components/UserProfile";
+import Vehicles from "@/components/Vehicles";
+import type { UserRow } from "@/components/UserManagement";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import socketIOClient from "socket.io-client";
@@ -20,8 +23,9 @@ export default function HomePage() {
   const [sharing, setSharing] = useState(false);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<
-    "dash" | "users" | "routes" | "nodes" | "login" | "register" | null
+    "dash" | "users" | "user-profile" | "vehicles" | "routes" | "nodes" | "login" | "register" | null
   >(null);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
@@ -146,8 +150,8 @@ export default function HomePage() {
         isOpen={isLeftOpen}
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
-          if (["dash", "users", "routes", "nodes"].includes(label)) {
-            setActivePanel(label as "dash" | "users" | "routes" | "nodes");
+          if (["dash", "users", "vehicles", "routes", "nodes"].includes(label)) {
+            setActivePanel(label as "dash" | "users" | "vehicles" | "routes" | "nodes");
             setIsLeftOpen(false);
           } else {
             setActivePanel(null);
@@ -159,7 +163,21 @@ export default function HomePage() {
           {activePanel === "dash" ? (
             <Dashboard />
           ) : activePanel === "users" ? (
-            <UserManagement />
+            <UserManagement
+              onViewProfile={(user) => {
+                setSelectedUser(user);
+                setActivePanel("user-profile");
+              }}
+            />
+          ) : activePanel === "user-profile" && selectedUser ? (
+            <UserProfile
+              user={selectedUser}
+              onBack={() => {
+                setActivePanel("users");
+              }}
+            />
+          ) : activePanel === "vehicles" ? (
+            <Vehicles />
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
