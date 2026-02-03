@@ -22,13 +22,10 @@ export default function MapView({ mapRef }: MapViewProps) {
                 iconAnchor: [8, 8],
             });
 
-            if (mapRef) mapRef.current = { map, L, pulsingIcon };
-
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "&copy; OpenStreetMap contributors",
             }).addTo(map);
 
-            L.control.zoom({ position: "topright" }).addTo(map);
             L.control.scale({ position: "bottomleft" }).addTo(map);
 
             // --- Continuous tracking state (inside this effect) ---
@@ -83,29 +80,9 @@ export default function MapView({ mapRef }: MapViewProps) {
                 }
             };
 
-            // Locate me button (start continuous watch)
-            const locateControl = L.Control.extend({
-                onAdd: function () {
-                    const div = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-                    div.innerHTML = `
-                        <a href="#" title="Locate Me" class="px-2 py-1 text-gray-800 hover:bg-gray-200">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        </a>
-                    `;
-
-                    // avoid map drag/zoom events when clicking button
-                    L.DomEvent.disableClickPropagation(div);
-
-                    div.onclick = (ev: any) => {
-                        ev.preventDefault?.();
-                        startWatching();
-                    };
-
-                    return div;
-                },
-            });
-
-            new locateControl({ position: "topright" }).addTo(map);
+            if (mapRef) {
+                mapRef.current = { map, L, pulsingIcon, startWatching };
+            }
 
             // Cleanup when component unmounts
             cleanup = () => {

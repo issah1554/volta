@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import MapView from "@/components/MapView";
 import ControlsBox from "@/components/ControlsBox";
 import InfoPanel from "@/components/InfoPanel";
-import Legend from "@/components/Legend";
+import RightSideBar from "@/components/layout/RightSideBar";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -118,12 +118,12 @@ export default function HomePage() {
   return (
     <div className="relative h-screen w-screen">
       <MapView mapRef={mapRef} />
+      <RightSideBar mapRef={mapRef} />
       <ControlsBox
         onShareToggle={() => setSharing((prev) => !prev)}
         sharing={sharing}
       />
       <InfoPanel />
-      <Legend />
     </div>
   );
 }
