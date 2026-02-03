@@ -7,6 +7,8 @@ import InfoPanel from "@/components/InfoPanel";
 import RightSideBar from "@/components/layout/RightSideBar";
 import LeftSideBar from "@/components/layout/LeftSideBar";
 import MainPanel from "@/components/layout/MainPanel";
+import Dashboard from "@/components/Dashboard";
+import UserManagement from "@/components/UserManagement";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import socketIOClient from "socket.io-client";
@@ -18,7 +20,7 @@ export default function HomePage() {
   const [sharing, setSharing] = useState(false);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<
-    "users" | "routes" | "nodes" | "login" | "register" | null
+    "dash" | "users" | "routes" | "nodes" | "login" | "register" | null
   >(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const sharingRef = useRef(false);
@@ -144,8 +146,8 @@ export default function HomePage() {
         isOpen={isLeftOpen}
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
-          if (["users", "routes", "nodes"].includes(label)) {
-            setActivePanel(label as "users" | "routes" | "nodes");
+          if (["dash", "users", "routes", "nodes"].includes(label)) {
+            setActivePanel(label as "dash" | "users" | "routes" | "nodes");
             setIsLeftOpen(false);
           } else {
             setActivePanel(null);
@@ -154,7 +156,11 @@ export default function HomePage() {
       />
       {activePanel && (
         <MainPanel title={activePanel} onClose={() => setActivePanel(null)}>
-          {activePanel === "login" || activePanel === "register" ? (
+          {activePanel === "dash" ? (
+            <Dashboard />
+          ) : activePanel === "users" ? (
+            <UserManagement />
+          ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
                 onSubmit={() => {

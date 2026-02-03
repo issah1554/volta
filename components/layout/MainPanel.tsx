@@ -17,7 +17,8 @@ export default function MainPanel({ title, onClose, children }: MainPanelProps) 
           sm:w-114 sm:max-w-[calc(100vw-40px)]
           h-full
           border border-white/30 bg-white/80 pt-16 p-2
-          shadow-xl backdrop-blur-sm ">
+          shadow-xl backdrop-blur-sm
+          flex flex-col ">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-main/20">
                     <div className="text-sm font-semibold capitalize text-main-800">
                         {title}
@@ -31,7 +32,7 @@ export default function MainPanel({ title, onClose, children }: MainPanelProps) 
                         <i className="bi bi-x-lg text-sm" />
                     </button>
                 </div>
-                <div className="px-4 py-4 text-sm text-main-700">
+                <div className="flex-1 overflow-y-auto px-4 py-4 text-sm text-main-700">
                     {children ?? "Add content here."}
                 </div>
             </div>
