@@ -11,6 +11,8 @@ import Dashboard from "@/components/Dashboard";
 import UserManagement from "@/components/UserManagement";
 import UserProfile from "@/components/UserProfile";
 import Vehicles from "@/components/Vehicles";
+import Nodes from "@/components/Nodes";
+import Routes from "@/components/Routes";
 import type { UserRow } from "@/components/UserManagement";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
@@ -178,6 +180,10 @@ export default function HomePage() {
             />
           ) : activePanel === "vehicles" ? (
             <Vehicles />
+          ) : activePanel === "nodes" ? (
+            <Nodes />
+          ) : activePanel === "routes" ? (
+            <Routes />
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
