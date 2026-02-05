@@ -29,6 +29,12 @@ function buildUrl(path: string) {
   return `${trimmedBase}${trimmedPath}`;
 }
 
+type ApiEnvelope = {
+  success?: boolean;
+  message?: string;
+  [key: string]: unknown;
+};
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {}
@@ -60,16 +66,23 @@ export async function apiRequest<T>(
     payload = await response.text();
   }
 
-  if (!response.ok) {
-    const message =
-      typeof payload === "object" &&
-      payload !== null &&
-      "message" in payload &&
-      typeof (payload as { message?: unknown }).message === "string"
-        ? String((payload as { message?: unknown }).message)
-        : response.statusText || "Request failed";
+  const envelope = payload as ApiEnvelope;
+  const hasMessage =
+    typeof envelope === "object" &&
+    envelope !== null &&
+    "message" in envelope &&
+    typeof envelope.message === "string";
 
+  const message = hasMessage
+    ? String(envelope.message)
+    : response.statusText || "Request failed";
+
+  if (!response.ok) {
     throw new ApiError(message, response.status, payload);
+  }
+
+  if (typeof envelope?.success === "boolean" && envelope.success === false) {
+    throw new ApiError(message || "Request failed", response.status, payload);
   }
 
   return payload as T;

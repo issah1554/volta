@@ -1,18 +1,15 @@
 import { apiRequest } from "@/services/apiClient";
 import { clearTokens, storeTokens } from "@/services/tokenStore";
+import type { ApiResponse } from "@/types/apiResponse";
 
-export type AuthResponse = {
-  status?: string;
-  success?: boolean;
-  message?: string;
-  data?: {
-    access_token?: string;
-    refresh_token?: string;
-    token_type?: string;
-    [key: string]: unknown;
-  };
+export type AuthTokens = {
+  access_token?: string;
+  refresh_token?: string;
+  token_type?: string;
   [key: string]: unknown;
 };
+
+export type AuthResponse = ApiResponse<AuthTokens>;
 
 export interface LoginRequest {
   email: string;
@@ -23,7 +20,7 @@ export interface RegisterRequest {
   full_name: string;
   email: string;
   password: string;
-  confirm_password: string;
+  password_confirm: string;
 }
 
 export function login(payload: LoginRequest) {

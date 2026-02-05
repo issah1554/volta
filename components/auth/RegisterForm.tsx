@@ -34,7 +34,7 @@ export default function RegisterForm({ onSubmit }: RegisterFormProps) {
             full_name: fullName,
             email,
             password,
-            confirm_password: confirmPassword,
+            password_confirm: confirmPassword,
           });
           Toast.fire({ icon: "success", title: "Account created successfully." });
           onSubmit();
