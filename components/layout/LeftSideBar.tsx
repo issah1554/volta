@@ -3,6 +3,7 @@
 interface LeftSideBarProps {
     isOpen: boolean;
     isAdmin?: boolean;
+    isLoggedIn?: boolean;
     onClose: () => void;
     onSelect: (label: string) => void;
 }
@@ -13,9 +14,22 @@ const menuItems = [
     { label: "vehicles", icon: "bi-truck-front-fill" },
     { label: "nodes", icon: "bi-diagram-3-fill" },
     { label: "routes", icon: "bi-signpost-split-fill" },
+    { label: "help", icon: "bi-question-circle" },
+    { label: "support", icon: "bi-life-preserver" },
+    { label: "contacts", icon: "bi-telephone" },
 ];
 
-export default function LeftSideBar({ isOpen, isAdmin = false, onClose, onSelect }: LeftSideBarProps) {
+const adminLabels = new Set(["dash", "users", "vehicles", "nodes", "routes"]);
+const nonAdminLoggedInLabels = new Set(["dash", "vehicles", "help", "support", "contacts"]);
+const nonLoggedInLabels = new Set(["help", "support", "contacts"]);
+
+export default function LeftSideBar({
+    isOpen,
+    isAdmin = false,
+    isLoggedIn = false,
+    onClose,
+    onSelect,
+}: LeftSideBarProps) {
     return (
         <>
             {isOpen && (
@@ -56,7 +70,9 @@ export default function LeftSideBar({ isOpen, isAdmin = false, onClose, onSelect
 
                 <nav className="mt-3 space-y-2 px-5 pb-6">
                     {menuItems.map((item) => {
-                        if (item.label === "users" && !isAdmin) return null;
+                        if (!isLoggedIn && !nonLoggedInLabels.has(item.label)) return null;
+                        if (isLoggedIn && isAdmin && !adminLabels.has(item.label)) return null;
+                        if (isLoggedIn && !isAdmin && !nonAdminLoggedInLabels.has(item.label)) return null;
                         return (
                         <a
                             key={item.label}

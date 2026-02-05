@@ -210,14 +210,19 @@ export default function HomePage() {
       <LeftSideBar
         isOpen={isLeftOpen}
         isAdmin={isAdmin}
+        isLoggedIn={isLoggedIn}
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
-          if (["dash", "users", "vehicles", "routes", "nodes"].includes(label)) {
-            if (label === "users" && !isAdmin) {
-              setActivePanel(null);
-              setIsLeftOpen(false);
-              return;
-            }
+          if (!isLoggedIn) {
+            setActivePanel(null);
+            setIsLeftOpen(false);
+            return;
+          }
+          const allowedPanels = isAdmin
+            ? ["dash", "users", "vehicles", "routes", "nodes"]
+            : ["dash", "vehicles"];
+
+          if (allowedPanels.includes(label)) {
             setActivePanel(label as "dash" | "users" | "vehicles" | "routes" | "nodes");
             setIsLeftOpen(false);
           } else {
