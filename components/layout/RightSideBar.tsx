@@ -1,12 +1,19 @@
 "use client";
 
 import { RefObject, useEffect, useRef, useState } from "react";
+import Avatar from "@/components/ui/Avatar";
 
 interface RightSideBarProps {
   onShareToggle?: () => void;
   sharing?: boolean;
   mapRef?: RefObject<any>;
   isLoggedIn?: boolean;
+  user?: {
+    full_name?: string;
+    email?: string;
+    role?: string;
+    public_id?: string;
+  };
   onLoginClick?: () => void;
   onRegisterClick?: () => void;
   onLogoutClick?: () => void;
@@ -18,6 +25,7 @@ export default function RightSideBar({
   sharing,
   onShareToggle,
   isLoggedIn,
+  user,
   onLoginClick,
   onRegisterClick,
   onLogoutClick,
@@ -137,7 +145,7 @@ export default function RightSideBar({
           <i className="bi bi-person text-lg" />
         </button>
         {accountOpen && (
-          <div className="absolute right-full top-1/2 mr-2 w-40 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 shadow-xl backdrop-blur-md">
+          <div className="absolute right-full top-1/2 mr-2 w-56 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 shadow-xl backdrop-blur-md">
             {!isLoggedIn ? (
               <div className="space-y-1">
                 <button
@@ -164,7 +172,29 @@ export default function RightSideBar({
                 </button>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-lg border border-white/60 bg-white/80 px-2 py-2 text-xs text-main-700">
+                  <Avatar
+                    alt={user?.full_name || "User"}
+                    initials={user?.full_name || user?.email || "User"}
+                    size={36}
+                    status="online"
+                    className="shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-main-900">
+                      {user?.full_name || "User"}
+                    </p>
+                    {user?.email && (
+                      <p className="truncate text-xs text-main-600">{user.email}</p>
+                    )}
+                    {user?.role && (
+                      <p className="text-[11px] uppercase tracking-wide text-main-500">
+                        {user.role}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-main-800 transition hover:bg-white/80"

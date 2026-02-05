@@ -1,11 +1,20 @@
 import { apiRequest } from "@/services/apiClient";
-import { clearTokens, storeTokens } from "@/services/tokenStore";
+import { clearStoredUser, clearTokens, storeTokens, storeUser } from "@/services/tokenStore";
 import type { ApiResponse } from "@/types/apiResponse";
+
+export type AuthUser = {
+  public_id?: string;
+  full_name?: string;
+  email?: string;
+  role?: string;
+  [key: string]: unknown;
+};
 
 export type AuthTokens = {
   access_token?: string;
   refresh_token?: string;
   token_type?: string;
+  user?: AuthUser;
   [key: string]: unknown;
 };
 
@@ -43,8 +52,12 @@ export function logout() {
   });
 }
 
-export function persistTokens(response: AuthResponse) {
+export function persistAuth(response: AuthResponse) {
   storeTokens(response.data);
+  storeUser(response.data?.user);
 }
 
-export { clearTokens };
+export function clearAuth() {
+  clearTokens();
+  clearStoredUser();
+}

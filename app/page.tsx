@@ -16,9 +16,10 @@ import Routes from "@/components/Routes";
 import type { UserRow } from "@/components/UserManagement";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
-import { clearTokens, logout } from "@/services/auth";
+import { clearAuth, logout, type AuthUser } from "@/services/auth";
 import { ApiError } from "@/services/apiClient";
 import { Toast } from "@/components/ui/Toast";
+import { getStoredUser } from "@/services/tokenStore";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -32,6 +33,7 @@ export default function HomePage() {
   >(null);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -42,6 +44,14 @@ export default function HomePage() {
   useEffect(() => {
     sharingRef.current = sharing;
   }, [sharing]);
+
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setCurrentUser(storedUser);
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   // Connect to Socket.IO
   useEffect(() => {
@@ -162,6 +172,7 @@ export default function HomePage() {
         sharing={sharing}
         onShareToggle={() => setSharing((prev) => !prev)}
         isLoggedIn={isLoggedIn}
+        user={currentUser ?? undefined}
         onLoginClick={() => {
           setIsLeftOpen(false);
           setActivePanel("login");
@@ -173,11 +184,13 @@ export default function HomePage() {
         onLogoutClick={async () => {
           try {
             await logout();
-            clearTokens();
+            clearAuth();
+            setCurrentUser(null);
             Toast.fire({ icon: "success", title: "Logged out." });
             setIsLoggedIn(false);
           } catch (error) {
-            clearTokens();
+            clearAuth();
+            setCurrentUser(null);
             const message =
               error instanceof ApiError
                 ? error.message
@@ -225,8 +238,9 @@ export default function HomePage() {
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
-                onSubmit={() => {
+                onSubmit={(user) => {
                   setIsLoggedIn(true);
+                  setCurrentUser(user ?? null);
                   setActivePanel(null);
                 }}
               />

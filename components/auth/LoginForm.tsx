@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { login, persistTokens } from "@/services/auth";
+import { login, persistAuth, type AuthUser } from "@/services/auth";
 import { ApiError } from "@/services/apiClient";
 import { Toast } from "@/components/ui/Toast";
 
 interface LoginFormProps {
-  onSubmit: () => void;
+  onSubmit: (user?: AuthUser) => void;
 }
 
 export default function LoginForm({ onSubmit }: LoginFormProps) {
@@ -24,9 +24,9 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
         try {
           setIsSubmitting(true);
           const response = await login({ email, password });
-          persistTokens(response);
+          persistAuth(response);
           Toast.fire({ icon: "success", title: "Logged in successfully." });
-          onSubmit();
+          onSubmit(response.data?.user);
         } catch (error) {
           const message =
             error instanceof ApiError
