@@ -2,6 +2,7 @@
 
 interface LeftSideBarProps {
     isOpen: boolean;
+    isAdmin?: boolean;
     onClose: () => void;
     onSelect: (label: string) => void;
 }
@@ -14,7 +15,7 @@ const menuItems = [
     { label: "routes", icon: "bi-signpost-split-fill" },
 ];
 
-export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarProps) {
+export default function LeftSideBar({ isOpen, isAdmin = false, onClose, onSelect }: LeftSideBarProps) {
     return (
         <>
             {isOpen && (
@@ -54,7 +55,9 @@ export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarPr
                 </div>
 
                 <nav className="mt-3 space-y-2 px-5 pb-6">
-                    {menuItems.map((item) => (
+                    {menuItems.map((item) => {
+                        if (item.label === "users" && !isAdmin) return null;
+                        return (
                         <a
                             key={item.label}
                             href="#"
@@ -67,7 +70,8 @@ export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarPr
                             <i className={`bi ${item.icon} text-base text-main-700`} />
                             <span className="ml-3 capitalize">{item.label}</span>
                         </a>
-                    ))}
+                        );
+                    })}
                 </nav>
             </aside>
         </>

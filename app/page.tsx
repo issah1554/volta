@@ -37,6 +37,7 @@ export default function HomePage() {
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const isAdmin = currentUser?.role === "admin";
 
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
 
@@ -52,6 +53,13 @@ export default function HomePage() {
       setIsLoggedIn(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin && (activePanel === "users" || activePanel === "user-profile")) {
+      setActivePanel(null);
+      setSelectedUser(null);
+    }
+  }, [activePanel, isAdmin]);
 
   // Connect to Socket.IO
   useEffect(() => {
@@ -201,9 +209,15 @@ export default function HomePage() {
       />
       <LeftSideBar
         isOpen={isLeftOpen}
+        isAdmin={isAdmin}
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
           if (["dash", "users", "vehicles", "routes", "nodes"].includes(label)) {
+            if (label === "users" && !isAdmin) {
+              setActivePanel(null);
+              setIsLeftOpen(false);
+              return;
+            }
             setActivePanel(label as "dash" | "users" | "vehicles" | "routes" | "nodes");
             setIsLeftOpen(false);
           } else {
