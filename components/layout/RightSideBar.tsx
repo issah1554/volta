@@ -22,6 +22,7 @@ export default function RightSideBar({
   onRegisterClick,
   onLogoutClick,
 }: RightSideBarProps) {
+  const isSharing = Boolean(sharing);
   const handleZoomIn = () => mapRef?.current?.map?.zoomIn?.();
   const handleZoomOut = () => mapRef?.current?.map?.zoomOut?.();
   const handleLocate = () => mapRef?.current?.startWatching?.();
@@ -110,16 +111,17 @@ export default function RightSideBar({
 
       {/* Share */}
       <a
-        className={`${baseBtn} rounded-xl ${sharing ? "border-accent-400 bg-accent-500/10 hover:bg-accent-500/30  text-accent" : ""}`}
+        className={`${baseBtn} rounded-xl ${isSharing ? "border-accent-400 bg-accent text-accent hover:bg-accent-500/30" : ""}`}
         href="#"
         aria-label="Share"
-        title="Share"
+        aria-pressed={isSharing}
+        title={isSharing ? "Stop Sharing" : "Share"}
         onClick={(e) => {
           e.preventDefault();
           onShareToggle?.();
         }}
       >
-        <i className="bi bi-share-fill text-lg" />
+        <i className={`bi ${isSharing ? "bi-ban text-accent" : "bi-share-fill"} text-lg`} />
       </a>
 
 

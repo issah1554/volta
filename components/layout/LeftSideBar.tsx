@@ -21,7 +21,7 @@ export default function LeftSideBar({ isOpen, onClose, onSelect }: LeftSideBarPr
                 <button
                     type="button"
                     aria-label="Close sidebar"
-                    className="absolute inset-0 z-1050 cursor-default bg-black/15"
+                    className="absolute inset-0 z-1300 cursor-default bg-black/15"
                     onClick={onClose}
                 />
             )}

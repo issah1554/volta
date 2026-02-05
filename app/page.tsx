@@ -31,6 +31,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
 
@@ -101,6 +102,11 @@ export default function HomePage() {
   useEffect(() => {
     // When turning OFF sharing: remove ONLY my marker and stop sending
     if (!sharing) {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+
       if (mapRef.current) {
         const { map } = mapRef.current;
         const myMarker = markersRef.current[userId.current];
@@ -116,20 +122,33 @@ export default function HomePage() {
     }
 
     // When turning ON sharing: start sending positions
-    const interval = setInterval(() => {
-      if (!navigator.geolocation) return;
+    if (!navigator.geolocation) return;
 
-      navigator.geolocation.getCurrentPosition((pos) => {
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
         socketRef.current?.emit("sendLocation", {
           userId: userId.current,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           timestamp: Date.now(),
         });
-      });
-    }, 3000);
+      },
+      () => {
+        setSharing(false);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      }
+    );
 
-    return () => clearInterval(interval);
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
   }, [sharing]);
 
   return (
@@ -137,6 +156,8 @@ export default function HomePage() {
       <MapView mapRef={mapRef} />
       <RightSideBar
         mapRef={mapRef}
+        sharing={sharing}
+        onShareToggle={() => setSharing((prev) => !prev)}
         isLoggedIn={isLoggedIn}
         onLoginClick={() => {
           setIsLeftOpen(false);
