@@ -1,7 +1,9 @@
 import Avatar from "@/components/ui/Avatar";
 import { useEffect, useState } from "react";
-import { fetchUsers } from "@/services/users";
+import { deleteUser, fetchUsers } from "@/services/users";
 import { ApiError } from "@/services/apiClient";
+import Swal from "sweetalert2";
+import { Toast } from "@/components/ui/Toast";
 
 export type UserStatus = "online" | "offline" | "disabled" | "pending";
 
@@ -34,6 +36,7 @@ export default function UserManagement({
 }: UserManagementProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +77,46 @@ export default function UserManagement({
       isMounted = false;
     };
   }, []);
+
+  async function handleDelete(user: UserRow) {
+    if (deletingId) return;
+    const result = await Swal.fire({
+      title: "Delete user?",
+      html: `Type the user ID to confirm:<br><strong>${user.id}</strong>`,
+      input: "text",
+      inputLabel: "User ID",
+      inputPlaceholder: user.id,
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      confirmButtonColor: "#d33",
+      inputValidator: (value) => {
+        if (!value || value.trim() !== user.id) {
+          return "User ID does not match.";
+        }
+        return null;
+      },
+    });
+
+    if (!result.isConfirmed) return;
+    const confirmId = String(result.value ?? "").trim();
+
+    setDeletingId(user.id);
+    try {
+      await deleteUser(user.id, confirmId);
+      setUsers((prev) => prev.filter((item) => item.id !== user.id));
+      if (openMenuId === user.id) {
+        setOpenMenuId(null);
+      }
+      Toast.fire({ icon: "success", title: "User deleted." });
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Unable to delete user right now.";
+      setError(message);
+      Toast.fire({ icon: "error", title: message });
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <section
@@ -158,15 +201,17 @@ export default function UserManagement({
                           <i className="bi bi-pencil-square" />
                           Edit user
                         </button>
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-danger-700 transition hover:bg-danger-50"
-                        >
-                          <i className="bi bi-slash-circle" />
-                          Disable
-                        </button>
-                      </div>
-                    ) : null}
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-danger-700 transition hover:bg-danger-50"
+                        disabled={deletingId === user.id}
+                        onClick={() => handleDelete(user)}
+                      >
+                        <i className="bi bi-trash" />
+                        {deletingId === user.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  ) : null}
                   </div>
                 </div>
               ))}

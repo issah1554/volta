@@ -39,3 +39,10 @@ export async function fetchUsers(): Promise<UserRow[]> {
   const users = Array.isArray(response.data) ? response.data : [];
   return users.map(mapUser);
 }
+
+export async function deleteUser(userId: string, confirmId: string): Promise<void> {
+  await apiRequest<ApiResponse<unknown>>(`/users/${userId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ confirm: confirmId }),
+  });
+}

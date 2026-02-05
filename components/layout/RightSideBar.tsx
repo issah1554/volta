@@ -142,7 +142,7 @@ export default function RightSideBar({
           title="Account"
           onClick={() => setAccountOpen((v) => !v)}
         >
-          <i className="bi bi-person text-lg" />
+          <i className={`${isLoggedIn ? "bi bi-person-fill text-lg text-primary" : "bi bi-person text-lg "}`} />
         </button>
         {accountOpen && (
           <div className="absolute right-full top-1/2 mr-2 w-56 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 shadow-xl backdrop-blur-md">
