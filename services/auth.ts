@@ -1,9 +1,16 @@
 import { apiRequest } from "@/services/apiClient";
+import { clearTokens, storeTokens } from "@/services/tokenStore";
 
 export type AuthResponse = {
   status?: string;
+  success?: boolean;
   message?: string;
-  data?: unknown;
+  data?: {
+    access_token?: string;
+    refresh_token?: string;
+    token_type?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 };
 
@@ -32,3 +39,15 @@ export function register(payload: RegisterRequest) {
     body: JSON.stringify(payload),
   });
 }
+
+export function logout() {
+  return apiRequest<AuthResponse>("/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function persistTokens(response: AuthResponse) {
+  storeTokens(response.data);
+}
+
+export { clearTokens };

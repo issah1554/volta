@@ -16,6 +16,9 @@ import Routes from "@/components/Routes";
 import type { UserRow } from "@/components/UserManagement";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
+import { clearTokens, logout } from "@/services/auth";
+import { ApiError } from "@/services/apiClient";
+import { Toast } from "@/components/ui/Toast";
 import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
@@ -167,7 +170,21 @@ export default function HomePage() {
           setIsLeftOpen(false);
           setActivePanel("register");
         }}
-        onLogoutClick={() => setIsLoggedIn(false)}
+        onLogoutClick={async () => {
+          try {
+            await logout();
+            clearTokens();
+            Toast.fire({ icon: "success", title: "Logged out." });
+            setIsLoggedIn(false);
+          } catch (error) {
+            clearTokens();
+            const message =
+              error instanceof ApiError
+                ? error.message
+                : "Unable to log out right now.";
+            Toast.fire({ icon: "error", title: message });
+          }
+        }}
       />
       <LeftSideBar
         isOpen={isLeftOpen}

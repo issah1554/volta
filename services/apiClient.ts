@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/services/tokenStore";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000/volta/api";
 
@@ -32,9 +34,16 @@ export async function apiRequest<T>(
   init: RequestInit = {}
 ): Promise<T> {
   const url = buildUrl(path);
+  const accessToken = getAccessToken();
+  const authHeader =
+    accessToken && !("Authorization" in (init.headers ?? {}))
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
   const headers = {
     ...DEFAULT_HEADERS,
     ...(init.headers ?? {}),
+    ...authHeader,
   };
 
   const response = await fetch(url, {

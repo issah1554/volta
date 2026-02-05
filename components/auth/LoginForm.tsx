@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { login } from "@/services/auth";
+import { login, persistTokens } from "@/services/auth";
 import { ApiError } from "@/services/apiClient";
 import { Toast } from "@/components/ui/Toast";
 
@@ -23,7 +23,8 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
 
         try {
           setIsSubmitting(true);
-          await login({ email, password });
+          const response = await login({ email, password });
+          persistTokens(response);
           Toast.fire({ icon: "success", title: "Logged in successfully." });
           onSubmit();
         } catch (error) {
