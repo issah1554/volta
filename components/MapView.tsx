@@ -1,13 +1,21 @@
 'use client';
 
-import { useEffect, RefObject } from "react";
+import { useEffect, useRef, RefObject } from "react";
 import "leaflet/dist/leaflet.css";
 
 interface MapViewProps {
     mapRef?: RefObject<any>;
+    baseLayer?: "street" | "satellite";
 }
 
-export default function MapView({ mapRef }: MapViewProps) {
+export default function MapView({ mapRef, baseLayer = "street" }: MapViewProps) {
+    const baseLayerRef = useRef(baseLayer);
+
+    useEffect(() => {
+        baseLayerRef.current = baseLayer;
+        mapRef?.current?.setBaseLayer?.(baseLayer);
+    }, [baseLayer, mapRef]);
+
     useEffect(() => {
         let cleanup: (() => void) | null = null;
 
@@ -22,9 +30,19 @@ export default function MapView({ mapRef }: MapViewProps) {
                 iconAnchor: [8, 8],
             });
 
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            const streetLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "&copy; OpenStreetMap contributors",
-            }).addTo(map);
+            });
+
+            const satelliteLayer = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+                    attribution: "Tiles &copy; Esri",
+                }
+            );
+
+            let currentBaseLayer = streetLayer;
+            currentBaseLayer.addTo(map);
 
             L.control.scale({ position: "bottomleft" }).addTo(map);
 
@@ -81,7 +99,20 @@ export default function MapView({ mapRef }: MapViewProps) {
             };
 
             if (mapRef) {
-                mapRef.current = { map, L, pulsingIcon, startWatching };
+                mapRef.current = {
+                    map,
+                    L,
+                    pulsingIcon,
+                    startWatching,
+                    setBaseLayer: (layer: "street" | "satellite") => {
+                        const nextLayer = layer === "satellite" ? satelliteLayer : streetLayer;
+                        if (currentBaseLayer === nextLayer) return;
+                        map.removeLayer(currentBaseLayer);
+                        currentBaseLayer = nextLayer;
+                        currentBaseLayer.addTo(map);
+                    },
+                };
+                mapRef.current.setBaseLayer(baseLayerRef.current);
             }
 
             // Cleanup when component unmounts

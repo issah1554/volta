@@ -16,7 +16,7 @@ export default function MainPanel({ title, onClose, children }: MainPanelProps) 
           w-full max-w-full
           sm:w-114 sm:max-w-[calc(100vw-40px)]
           h-full
-          border border-white/30 bg-white/80 pt-16 p-2
+          border border-white/30 bg-white/80 pt-14
           shadow-xl backdrop-blur-sm
           flex flex-col ">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-main/20">

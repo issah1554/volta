@@ -7,6 +7,8 @@ interface RightSideBarProps {
   onShareToggle?: () => void;
   sharing?: boolean;
   mapRef?: RefObject<any>;
+  baseLayer?: "street" | "satellite";
+  onBaseLayerChange?: (layer: "street" | "satellite") => void;
   isLoggedIn?: boolean;
   user?: {
     full_name?: string;
@@ -24,6 +26,8 @@ export default function RightSideBar({
   mapRef,
   sharing,
   onShareToggle,
+  baseLayer = "street",
+  onBaseLayerChange,
   isLoggedIn,
   user,
   onLoginClick,
@@ -36,11 +40,16 @@ export default function RightSideBar({
   const handleLocate = () => mapRef?.current?.startWatching?.();
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const layersRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
         setAccountOpen(false);
+      }
+      if (layersRef.current && !layersRef.current.contains(event.target as Node)) {
+        setLayersOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -98,14 +107,45 @@ export default function RightSideBar({
       </a>
 
       {/* Layers */}
-      <a
-        className={`${baseBtn} rounded-xl`}
-        href="#"
-        aria-label="Layers"
-        title="Layers"
-      >
-        <i className="bi bi-stack text-lg" />
-      </a>
+      <div className="relative" ref={layersRef}>
+        <button
+          type="button"
+          className={`${baseBtn} rounded-xl`}
+          aria-label="Layers"
+          title="Layers"
+          onClick={() => setLayersOpen((v) => !v)}
+        >
+          <i className="bi bi-stack text-lg" />
+        </button>
+        {layersOpen && (
+          <div className="absolute right-full top-1/2 mr-2 w-40 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 text-xs shadow-xl backdrop-blur-md">
+            <button
+              type="button"
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-white/80 ${baseLayer === "street" ? "text-primary" : "text-main-800"
+                }`}
+              onClick={() => {
+                onBaseLayerChange?.("street");
+                setLayersOpen(false);
+              }}
+            >
+              <i className="bi bi-map" />
+              Street
+            </button>
+            <button
+              type="button"
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-white/80 ${baseLayer === "satellite" ? "text-primary" : "text-main-800"
+                }`}
+              onClick={() => {
+                onBaseLayerChange?.("satellite");
+                setLayersOpen(false);
+              }}
+            >
+              <i className="bi bi-globe2" />
+              Satellite
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Legend */}
       <a

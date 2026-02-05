@@ -34,6 +34,7 @@ export default function HomePage() {
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [baseLayer, setBaseLayer] = useState<"street" | "satellite">("street");
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -174,11 +175,13 @@ export default function HomePage() {
 
   return (
     <div className="relative h-screen w-screen">
-      <MapView mapRef={mapRef} />
+      <MapView mapRef={mapRef} baseLayer={baseLayer} />
       <RightSideBar
         mapRef={mapRef}
         sharing={sharing}
         onShareToggle={() => setSharing((prev) => !prev)}
+        baseLayer={baseLayer}
+        onBaseLayerChange={setBaseLayer}
         isLoggedIn={isLoggedIn}
         user={currentUser ?? undefined}
         onLoginClick={() => {
