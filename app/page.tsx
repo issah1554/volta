@@ -36,6 +36,7 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [baseLayer, setBaseLayer] = useState<"street" | "satellite">("street");
   const [routeSearch, setRouteSearch] = useState("");
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const sharingRef = useRef(false);
   const routeLineRef = useRef<any>(null);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
@@ -308,7 +309,11 @@ export default function HomePage() {
             <Routes
               searchQuery={routeSearch}
               showActions={isAdmin}
-              onRouteSelect={(route) => showRouteLine(route.geometry ?? null)}
+              selectedRouteId={selectedRouteId}
+              onRouteSelect={(route) => {
+                setSelectedRouteId(route.id);
+                showRouteLine(route.geometry ?? null);
+              }}
             />
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (

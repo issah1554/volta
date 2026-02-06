@@ -30,25 +30,33 @@ export interface RoutesProps {
   routes?: RouteRow[];
   searchQuery?: string;
   showActions?: boolean;
+  selectedRouteId?: string | null;
   onRouteSelect?: (route: RouteRow) => void;
   onEditRoute?: (route: RouteRow) => void;
   onDeleteRoute?: (route: RouteRow) => void;
+  onNewRoute?: () => void;
+  onAddNodes?: () => void;
 }
 
 const statusPill: Record<RouteStatus, string> = {
-  active: "bg-success-50 text-success-700 border-success-200",
-  inactive: "bg-secondary-50 text-secondary-700 border-secondary-200",
+  active:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100/60",
+  inactive:
+    "border-slate-200 bg-slate-50 text-slate-700 ring-1 ring-slate-100/60",
 };
 
 export default function Routes({
-  title = "Route definitions",
-  subtitle = "Routes composed of ordered nodes and assignments.",
+  title = "Routes",
+  subtitle,
   routes,
   searchQuery = "",
   showActions = true,
+  selectedRouteId = null,
   onRouteSelect,
   onEditRoute,
   onDeleteRoute,
+  onNewRoute,
+  onAddNodes,
 }: RoutesProps) {
   const [routeRows, setRouteRows] = useState<RouteRow[]>(routes ?? []);
   const [isLoading, setIsLoading] = useState(!routes);
@@ -77,7 +85,9 @@ export default function Routes({
         .catch((err) => {
           if (!isMounted) return;
           const message =
-            err instanceof ApiError ? err.message : "Unable to load routes right now.";
+            err instanceof ApiError
+              ? err.message
+              : "Unable to load routes right now.";
           setError(message);
         })
         .finally(() => {
@@ -116,6 +126,7 @@ export default function Routes({
       await deleteRoute(route.id);
       setRouteRows((prev) => prev.filter((item) => item.id !== route.id));
       Toast.fire({ icon: "success", title: "Route deleted." });
+      onDeleteRoute?.(route);
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : "Unable to delete route right now.";
@@ -127,119 +138,174 @@ export default function Routes({
   }
 
   return (
-    <section
-      className="routes-panel flex h-full w-full flex-col text-main-800"
-      style={{ containerType: "inline-size" }}
-    >
+    <section className="flex h-full w-full flex-col text-slate-800">
+      {/* Header */}
       {showActions ? (
-        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-white/40 bg-white/80 p-4 mb-3 shadow-sm backdrop-blur-sm">
+        <header className="mb-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4  backdrop-blur supports-backdrop-filter:bg-white/60">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+              {subtitle ? (
+                <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
+              ) : null}
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-main-600">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-main-200 bg-white px-3 py-2 text-main-700 transition hover:border-primary-300 hover:text-primary-700"
-            >
-              <i className="bi bi-signpost" />
-              New route
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-2 text-primary-700"
-            >
-              <i className="bi bi-diagram-3" />
-              Add nodes
-            </button>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={onNewRoute}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 font-medium text-slate-700  transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+              >
+                <i className="bi bi-signpost" />
+                New route
+              </button>
+
+              <button
+                type="button"
+                onClick={onAddNodes}
+                className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-2 font-medium text-indigo-700  transition hover:border-indigo-300 hover:bg-indigo-100 active:scale-[0.98]"
+              >
+                <i className="bi bi-diagram-3" />
+                Add nodes
+              </button>
+            </div>
           </div>
         </header>
-
       ) : null}
 
+      {/* States */}
       {isLoading ? (
-        <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
-          Loading routes...
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 ">
+          <div className="flex items-center gap-3">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600" />
+            Loading routes...
+          </div>
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-danger-100 bg-danger-50 px-4 py-4 text-sm text-danger-700">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700 ">
           {error}
         </div>
       ) : routeRows.length === 0 ? (
-        <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 ">
           No routes found.
         </div>
       ) : showNoMatches ? (
-        <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 ">
           No routes match &quot;{searchQuery.trim()}&quot;.
         </div>
       ) : (
-        <div className="grid">
-          {visibleRoutes.map((route) => (
-            <div
-              key={route.id}
-              className="route-row grid items-center gap-3 rounded-0 border-b border-main-300 bg-white/90 px-3 py-3 text-xs text-main-600 transition-colors duration-200 cursor-pointer hover:bg-main-200"
-              role="button"
-              tabIndex={0}
-              onClick={() => onRouteSelect?.(route)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onRouteSelect?.(route);
-                }
-              }}
-            >
-              <div>
-                <p className="text-sm font-semibold text-main-900">{route.name}</p>
-                <p className="text-xs text-main-500">
-                  {route.code ? `Code: ${route.code}` : "No code"}
-                </p>
-              </div>
-              <div className="flex items-center justify-end gap-2">
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusPill[route.status]}`}>
-                  {route.status}
-                </span>
-                {showActions ? (
-                  <div onClick={(event) => event.stopPropagation()}>
-                    <DropdownMenu
-                      openMode="click"
-                      toggler={
-                        <button
-                          type="button"
-                          aria-label="Route actions"
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-main-200 bg-white text-main-700 transition hover:border-primary-300 hover:text-primary-700"
-                        >
-                          <i className="bi bi-three-dots-vertical text-sm" />
-                        </button>
-                      }
-                      items={[
-                        {
-                          label: "Edit route",
-                          icon: <i className="bi bi-pencil-square" />,
-                          onClick: () => onEditRoute?.(route),
-                        },
-                        {
-                          label: "Delete route",
-                          icon: <i className="bi bi-trash" />,
-                          onClick: () => handleDelete(route),
-                        },
-                      ]}
-                    />
-                  </div>
-                ) : null}
-              </div>
+        <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-slate-200 bg-white ">
+          <ul className="divide-y divide-slate-200">
+            {visibleRoutes.map((route) => {
+              const isSelected = selectedRouteId === route.id;
 
-            </div>
-          ))}
+              return (
+                <li key={route.id}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onRouteSelect?.(route)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onRouteSelect?.(route);
+                      }
+                    }}
+                    className={[
+                      "group relative flex items-center gap-3 px-4 py-3 text-left transition",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60",
+                      "hover:bg-slate-50",
+                      isSelected ? "bg-indigo-50/70" : "",
+                    ].join(" ")}
+                  >
+                    {/* Selected indicator */}
+                    <span
+                      className={[
+                        "absolute left-0 top-0 h-full w-1 rounded-r",
+                        isSelected ? "bg-indigo-500" : "bg-transparent",
+                      ].join(" ")}
+                      aria-hidden="true"
+                    />
+
+                    {/* Main */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {route.name}
+                        </p>
+                        {route.code ? (
+                          <span className="truncate rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                            {route.code}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <i className="bi bi-diagram-2" />
+                          {route.nodes?.length ?? 0} nodes
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <i className="bi bi-clock" />
+                          Updated {new Date(route.updatedAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right side */}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          "rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                          statusPill[route.status],
+                        ].join(" ")}
+                      >
+                        {route.status}
+                      </span>
+
+                      {showActions ? (
+                        <div onClick={(event) => event.stopPropagation()}>
+                          <DropdownMenu
+                            openMode="click"
+                            toggler={
+                              <button
+                                type="button"
+                                aria-label="Route actions"
+                                className={[
+                                  "inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white text-slate-700  transition",
+                                  "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60",
+                                ].join(" ")}
+                              >
+                                <i className="bi bi-three-dots-vertical text-sm" />
+                              </button>
+                            }
+                            items={[
+                              {
+                                label: "Edit route",
+                                icon: <i className="bi bi-pencil-square" />,
+                                onClick: () => onEditRoute?.(route),
+                              },
+                              {
+                                label:
+                                  deletingId === route.id
+                                    ? "Deleting..."
+                                    : "Delete route",
+                                icon: <i className="bi bi-trash" />,
+                                onClick: () => handleDelete(route),
+                              },
+                            ]}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
-
-      <style jsx>{`
-        .routes-panel {
-          container-name: routes-panel;
-        }
-
-        .route-row {
-          grid-template-columns: minmax(0, 1fr) auto;
-        }
-      `}</style>
     </section>
   );
 }
