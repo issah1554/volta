@@ -8,6 +8,7 @@ type RemoteRoute = {
   id: number | string;
   code?: string | null;
   name?: string | null;
+  geometry?: string | null;
   is_active?: boolean | null;
   created_at?: string | null;
 };
@@ -25,6 +26,7 @@ function mapRoute(route: RemoteRoute): RouteRow {
     id: String(route.id),
     code,
     name,
+    geometry: route.geometry ?? null,
     status: mapStatus(route),
     updatedAt,
     nodes: [],

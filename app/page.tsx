@@ -37,6 +37,7 @@ export default function HomePage() {
   const [baseLayer, setBaseLayer] = useState<"street" | "satellite">("street");
   const [routeSearch, setRouteSearch] = useState("");
   const sharingRef = useRef(false);
+  const routeLineRef = useRef<any>(null);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const isAdmin = currentUser?.role === "admin";
@@ -47,6 +48,48 @@ export default function HomePage() {
   useEffect(() => {
     sharingRef.current = sharing;
   }, [sharing]);
+
+  function parseLineString(geometry: string): Array<[number, number]> | null {
+    const match = geometry.match(/linestring\s*\((.+)\)/i);
+    if (!match) return null;
+    const pairs = match[1].split(",");
+    const coords: Array<[number, number]> = [];
+
+    for (const pair of pairs) {
+      const parts = pair.trim().split(/\s+/);
+      if (parts.length < 2) continue;
+      const lng = Number(parts[0]);
+      const lat = Number(parts[1]);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+      coords.push([lat, lng]);
+    }
+
+    return coords.length ? coords : null;
+  }
+
+  function showRouteLine(geometry?: string | null) {
+    const mapInstance = mapRef.current?.map;
+    const L = mapRef.current?.L;
+    if (!mapInstance || !L) return;
+
+    if (routeLineRef.current) {
+      mapInstance.removeLayer(routeLineRef.current);
+      routeLineRef.current = null;
+    }
+
+    if (!geometry) return;
+    const coords = parseLineString(geometry);
+    if (!coords) return;
+
+    const line = L.polyline(coords, {
+      color: "#2563eb",
+      weight: 4,
+      opacity: 0.9,
+    });
+    line.addTo(mapInstance);
+    routeLineRef.current = line;
+    mapInstance.fitBounds(line.getBounds(), { padding: [24, 24] });
+  }
 
   useEffect(() => {
     const storedUser = getStoredUser();
@@ -257,7 +300,11 @@ export default function HomePage() {
           ) : activePanel === "nodes" ? (
             <Nodes />
           ) : activePanel === "routes" ? (
-            <Routes searchQuery={routeSearch} />
+            <Routes
+              searchQuery={routeSearch}
+              showActions={isAdmin}
+              onRouteSelect={(route) => showRouteLine(route.geometry ?? null)}
+            />
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
