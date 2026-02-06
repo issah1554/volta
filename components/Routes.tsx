@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchRoutes } from "@/services/routes";
+import { deleteRoute, fetchRoutes } from "@/services/routes";
 import { ApiError } from "@/services/apiClient";
+import { DropdownMenu } from "@/components/ui/Dropdown";
+import { Toast } from "@/components/ui/Toast";
 
 export type RouteStatus = "active" | "inactive";
 
@@ -29,6 +31,8 @@ export interface RoutesProps {
   searchQuery?: string;
   showActions?: boolean;
   onRouteSelect?: (route: RouteRow) => void;
+  onEditRoute?: (route: RouteRow) => void;
+  onDeleteRoute?: (route: RouteRow) => void;
 }
 
 const statusPill: Record<RouteStatus, string> = {
@@ -43,10 +47,13 @@ export default function Routes({
   searchQuery = "",
   showActions = true,
   onRouteSelect,
+  onEditRoute,
+  onDeleteRoute,
 }: RoutesProps) {
   const [routeRows, setRouteRows] = useState<RouteRow[]>(routes ?? []);
   const [isLoading, setIsLoading] = useState(!routes);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (routes) {
@@ -99,13 +106,33 @@ export default function Routes({
   const showNoMatches =
     !!searchQuery.trim() && routeRows.length > 0 && visibleRoutes.length === 0;
 
+  async function handleDelete(route: RouteRow) {
+    if (deletingId) return;
+    const confirmDelete = window.confirm(`Delete route "${route.name}"?`);
+    if (!confirmDelete) return;
+
+    setDeletingId(route.id);
+    try {
+      await deleteRoute(route.id);
+      setRouteRows((prev) => prev.filter((item) => item.id !== route.id));
+      Toast.fire({ icon: "success", title: "Route deleted." });
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Unable to delete route right now.";
+      setError(message);
+      Toast.fire({ icon: "error", title: message });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section
       className="routes-panel flex h-full w-full flex-col text-main-800"
       style={{ containerType: "inline-size" }}
     >
       {showActions ? (
-        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-white/40 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-white/40 bg-white/80 p-4 mb-3 shadow-sm backdrop-blur-sm">
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-main-600">
             <button
@@ -165,10 +192,38 @@ export default function Routes({
                   {route.code ? `Code: ${route.code}` : "No code"}
                 </p>
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusPill[route.status]}`}>
                   {route.status}
                 </span>
+                {showActions ? (
+                  <div onClick={(event) => event.stopPropagation()}>
+                    <DropdownMenu
+                      openMode="click"
+                      toggler={
+                        <button
+                          type="button"
+                          aria-label="Route actions"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-main-200 bg-white text-main-700 transition hover:border-primary-300 hover:text-primary-700"
+                        >
+                          <i className="bi bi-three-dots-vertical text-sm" />
+                        </button>
+                      }
+                      items={[
+                        {
+                          label: "Edit route",
+                          icon: <i className="bi bi-pencil-square" />,
+                          onClick: () => onEditRoute?.(route),
+                        },
+                        {
+                          label: "Delete route",
+                          icon: <i className="bi bi-trash" />,
+                          onClick: () => handleDelete(route),
+                        },
+                      ]}
+                    />
+                  </div>
+                ) : null}
               </div>
 
             </div>
@@ -182,17 +237,7 @@ export default function Routes({
         }
 
         .route-row {
-          grid-template-columns: 1fr;
-        }
-
-        @container routes-panel (min-width: 720px) {
-          .route-row {
-            grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 0.7fr)) minmax(0, 0.5fr);
-          }
-
-          .route-nodes {
-            grid-column: 1 / -1;
-          }
+          grid-template-columns: minmax(0, 1fr) auto;
         }
       `}</style>
     </section>

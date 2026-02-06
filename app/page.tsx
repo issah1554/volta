@@ -261,6 +261,11 @@ export default function HomePage() {
         onClose={() => setIsLeftOpen(false)}
         onSelect={(label) => {
           if (!isLoggedIn) {
+            if (label === "routes") {
+              setActivePanel("routes");
+              setIsLeftOpen(false);
+              return;
+            }
             setActivePanel(null);
             setIsLeftOpen(false);
             return;

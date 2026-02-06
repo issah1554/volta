@@ -43,3 +43,9 @@ export async function fetchRoutes(searchQuery?: string): Promise<RouteRow[]> {
   const routes = Array.isArray(response.data) ? response.data : [];
   return routes.map(mapRoute);
 }
+
+export async function deleteRoute(routeId: string): Promise<void> {
+  await apiRequest<ApiResponse<unknown>>(`/routes/${routeId}`, {
+    method: "DELETE",
+  });
+}
