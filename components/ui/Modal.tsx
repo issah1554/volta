@@ -98,7 +98,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex  ${positionClasses[position]}`}
+      className={`fixed inset-0 z-[2000] flex ${positionClasses[position]}`}
     >
       {/* Backdrop */}
       <div
