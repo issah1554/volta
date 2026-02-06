@@ -4,9 +4,20 @@ interface SearchBoxProps {
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
     containerClassName?: string;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
+    placeholder?: string;
 }
 
-export default function SearchBox({ isSidebarOpen, onToggleSidebar, containerClassName }: SearchBoxProps) {
+export default function SearchBox({
+    isSidebarOpen,
+    onToggleSidebar,
+    containerClassName,
+    searchValue,
+    onSearchChange,
+    placeholder,
+}: SearchBoxProps) {
+    const inputValueProps = searchValue === undefined ? {} : { value: searchValue };
 
     return (
         <div className={`absolute left-3 right-3 top-3 z-1200 sm:left-5 sm:right-auto sm:top-5 ${containerClassName ?? ""}`}>
@@ -35,8 +46,10 @@ export default function SearchBox({ isSidebarOpen, onToggleSidebar, containerCla
                 {/* Input */}
                 <input
                     type="search"
-                    placeholder="Search for a route"
+                    placeholder={placeholder ?? "Search for a route"}
                     className="min-w-0 flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none"
+                    onChange={(event) => onSearchChange?.(event.target.value)}
+                    {...inputValueProps}
                 />
 
                 {/* Search Icon */}

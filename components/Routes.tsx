@@ -1,3 +1,9 @@
+ "use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { fetchRoutes } from "@/services/routes";
+import { ApiError } from "@/services/apiClient";
+
 export type RouteStatus = "active" | "inactive";
 
 export type RouteNode = {
@@ -19,62 +25,8 @@ export interface RoutesProps {
   title?: string;
   subtitle?: string;
   routes?: RouteRow[];
+  searchQuery?: string;
 }
-
-const defaultRoutes: RouteRow[] = [
-  {
-    id: "r-01",
-    code: "PL-001",
-    name: "Port Line",
-    status: "active",
-    createdBy: "Amina Yusuf",
-    updatedAt: "2024-05-09",
-    nodes: [
-      { seqNo: 1, name: "Alpha Station" },
-      { seqNo: 2, name: "Port Terminal" },
-      { seqNo: 3, name: "Dock 4" },
-    ],
-  },
-  {
-    id: "r-02",
-    code: "WL-014",
-    name: "Warehouse Loop",
-    status: "active",
-    createdBy: "Tomas Reed",
-    updatedAt: "2024-05-10",
-    nodes: [
-      { seqNo: 1, name: "Warehouse Junction" },
-      { seqNo: 2, name: "Depot North" },
-      { seqNo: 3, name: "Switchboard" },
-      { seqNo: 4, name: "Alpha Station" },
-    ],
-  },
-  {
-    id: "r-03",
-    code: "NR-220",
-    name: "North Ridge",
-    status: "inactive",
-    createdBy: "Zuri Mwita",
-    updatedAt: "2024-04-26",
-    nodes: [
-      { seqNo: 1, name: "East Ridge Landmark" },
-      { seqNo: 2, name: "North Gate" },
-    ],
-  },
-  {
-    id: "r-04",
-    code: "CC-104",
-    name: "City Center",
-    status: "active",
-    createdBy: "Noah Santos",
-    updatedAt: "2024-05-11",
-    nodes: [
-      { seqNo: 1, name: "Central Station" },
-      { seqNo: 2, name: "Market Junction" },
-      { seqNo: 3, name: "Library Stop" },
-    ],
-  },
-];
 
 const statusPill: Record<RouteStatus, string> = {
   active: "bg-success-50 text-success-700 border-success-200",
@@ -84,8 +36,64 @@ const statusPill: Record<RouteStatus, string> = {
 export default function Routes({
   title = "Route definitions",
   subtitle = "Routes composed of ordered nodes and assignments.",
-  routes = defaultRoutes,
+  routes,
+  searchQuery = "",
 }: RoutesProps) {
+  const [routeRows, setRouteRows] = useState<RouteRow[]>(routes ?? []);
+  const [isLoading, setIsLoading] = useState(!routes);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (routes) {
+      setRouteRows(routes);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    let isMounted = true;
+    const handle = window.setTimeout(() => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+
+      fetchRoutes(searchQuery)
+        .then((data) => {
+          if (!isMounted) return;
+          setRouteRows(data);
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          const message =
+            err instanceof ApiError ? err.message : "Unable to load routes right now.";
+          setError(message);
+        })
+        .finally(() => {
+          if (!isMounted) return;
+          setIsLoading(false);
+        });
+    }, 500);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(handle);
+    };
+  }, [routes, searchQuery]);
+
+  const visibleRoutes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return routeRows;
+
+    return routeRows.filter((route) => {
+      const nameMatch = route.name.toLowerCase().includes(q);
+      const codeMatch = route.code?.toLowerCase().includes(q) ?? false;
+      return nameMatch || codeMatch;
+    });
+  }, [routeRows, searchQuery]);
+
+  const showNoMatches =
+    !!searchQuery.trim() && routeRows.length > 0 && visibleRoutes.length === 0;
+
   return (
     <section
       className="routes-panel flex h-full w-full flex-col gap-5 text-main-800"
@@ -116,59 +124,75 @@ export default function Routes({
       </header>
 
       <div className="rounded-2xl border border-white/40 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
-        <div className="grid gap-3">
-          {routes.map((route) => (
-            <div
-              key={route.id}
-              className="route-row grid items-center gap-3 rounded-xl border border-main-100 bg-white/90 px-3 py-3 text-xs text-main-600"
-            >
-              <div>
-                <p className="text-sm font-semibold text-main-900">{route.name}</p>
-                <p className="text-xs text-main-500">
-                  {route.code ? `Code: ${route.code}` : "No code"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-main-500">Created by</p>
-                <p className="text-sm text-main-800">{route.createdBy ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-main-500">Nodes</p>
-                <p className="text-sm text-main-800">{route.nodes.length}</p>
-              </div>
-              <div>
-                <p className="text-xs text-main-500">Updated</p>
-                <p className="text-sm text-main-800">{route.updatedAt}</p>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusPill[route.status]}`}>
-                  {route.status}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Route actions"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-main-200 bg-white text-main-700 transition hover:border-primary-300 hover:text-primary-700"
-                >
-                  <i className="bi bi-three-dots-vertical text-sm" />
-                </button>
-              </div>
-              <div className="route-nodes col-span-full rounded-lg border border-main-100 bg-white/70 px-3 py-2 text-xs text-main-600">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-main-500">Ordered nodes</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {route.nodes.map((node) => (
-                    <span
-                      key={`${route.id}-${node.seqNo}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-main-200 bg-white px-2 py-1 text-[11px] text-main-700"
-                    >
-                      <span className="text-[10px] text-main-400">{node.seqNo}</span>
-                      {node.name}
-                    </span>
-                  ))}
+        {isLoading ? (
+          <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
+            Loading routes...
+          </div>
+        ) : error ? (
+          <div className="rounded-xl border border-danger-100 bg-danger-50 px-4 py-4 text-sm text-danger-700">
+            {error}
+          </div>
+        ) : routeRows.length === 0 ? (
+          <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
+            No routes found.
+          </div>
+        ) : showNoMatches ? (
+          <div className="rounded-xl border border-main-100 bg-white/90 px-4 py-4 text-sm text-main-600">
+            No routes match &quot;{searchQuery.trim()}&quot;.
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {visibleRoutes.map((route) => (
+              <div
+                key={route.id}
+                className="route-row grid items-center gap-3 rounded-xl border border-main-100 bg-white/90 px-3 py-3 text-xs text-main-600"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-main-900">{route.name}</p>
+                  <p className="text-xs text-main-500">
+                    {route.code ? `Code: ${route.code}` : "No code"}
+                  </p>
                 </div>
+                <div>
+                  <p className="text-xs text-main-500">Nodes</p>
+                  <p className="text-sm text-main-800">{route.nodes.length}</p>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusPill[route.status]}`}>
+                    {route.status}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Route actions"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-main-200 bg-white text-main-700 transition hover:border-primary-300 hover:text-primary-700"
+                  >
+                    <i className="bi bi-three-dots-vertical text-sm" />
+                  </button>
+                </div>
+                {route.nodes.length > 0 ? (
+                  <div className="route-nodes col-span-full rounded-lg border border-main-100 bg-white/70 px-3 py-2 text-xs text-main-600">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-main-500">Ordered nodes</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {route.nodes.map((node) => (
+                        <span
+                          key={`${route.id}-${node.seqNo}`}
+                          className="inline-flex items-center gap-2 rounded-full border border-main-200 bg-white px-2 py-1 text-[11px] text-main-700"
+                        >
+                          <span className="text-[10px] text-main-400">{node.seqNo}</span>
+                          {node.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="route-nodes col-span-full rounded-lg border border-main-100 bg-white/70 px-3 py-2 text-xs text-main-500">
+                    No nodes available.
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <style jsx>{`

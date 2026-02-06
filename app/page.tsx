@@ -35,6 +35,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [baseLayer, setBaseLayer] = useState<"street" | "satellite">("street");
+  const [routeSearch, setRouteSearch] = useState("");
   const sharingRef = useRef(false);
   const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -256,7 +257,7 @@ export default function HomePage() {
           ) : activePanel === "nodes" ? (
             <Nodes />
           ) : activePanel === "routes" ? (
-            <Routes />
+            <Routes searchQuery={routeSearch} />
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
               <LoginForm
@@ -285,6 +286,13 @@ export default function HomePage() {
         isSidebarOpen={isLeftOpen}
         onToggleSidebar={() => setIsLeftOpen((prev) => !prev)}
         containerClassName={activePanel ? "z-[1200]" : ""}
+        searchValue={routeSearch}
+        onSearchChange={(value) => {
+          setRouteSearch(value);
+          if (value.trim()) {
+            setActivePanel("routes");
+          }
+        }}
       />
       <InfoPanel />
     </div>
