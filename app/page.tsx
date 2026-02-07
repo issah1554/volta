@@ -19,12 +19,13 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import { clearAuth, logout, type AuthUser } from "@/services/auth";
 import { ApiError } from "@/services/apiClient";
 import { Toast } from "@/components/ui/Toast";
-import { getStoredUser } from "@/services/tokenStore";
+import { getAccessToken, getStoredUser } from "@/services/tokenStore";
 import { LocationData } from "@/types/socket";
 
 export default function HomePage() {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
+  const vehicleMarkersRef = useRef<Record<string, { marker: any; lastSeen: number }>>({});
   const [sharing, setSharing] = useState(false);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<
@@ -41,11 +42,28 @@ export default function HomePage() {
   const socketRef = useRef<WebSocket | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const selectedRouteRef = useRef<string | null>(null);
-  const subscriptionRef = useRef<{ routeId: string | null; requestId: string | null }>({
+  const subscriptionRef = useRef<{ routeId: string | null }>({
     routeId: null,
-    requestId: null,
   });
-  const requestIdCounter = useRef(0);
+  const vehicleShareRef = useRef<{
+    vehicleId: string | null;
+    intervalId: number | null;
+    watchId: number | null;
+    lastPosition: {
+      lat: number;
+      lng: number;
+      heading: number | null;
+      speed: number | null;
+      accuracy: number | null;
+      recordedAt: string;
+    } | null;
+  }>({
+    vehicleId: null,
+    intervalId: null,
+    watchId: null,
+    lastPosition: null,
+  });
+  const [sharedVehicleId, setSharedVehicleId] = useState<number | null>(null);
   const isAdmin = currentUser?.role === "admin";
 
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
@@ -107,8 +125,10 @@ export default function HomePage() {
   }
 
   function nextRequestId() {
-    requestIdCounter.current += 1;
-    return `rsub-${requestIdCounter.current}`;
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
   useEffect(() => {
@@ -168,6 +188,40 @@ export default function HomePage() {
     });
   }
 
+  function handleVehicleLocationUpdate(update: {
+    vehicle_id: number;
+    plate_number?: string;
+    route_id?: number | string;
+    lat: number;
+    lng: number;
+    heading?: number | null;
+    speed_mps?: number | null;
+    accuracy_m?: number | null;
+    recorded_at?: string;
+    received_at?: string;
+  }) {
+    if (!mapRef.current) return;
+
+    const { L, map, pulsingIcon } = mapRef.current;
+    const markerKey = String(update.vehicle_id);
+    const label = update.plate_number ? `Vehicle: ${update.plate_number}` : `Vehicle: ${update.vehicle_id}`;
+
+    const now = Date.now();
+    const existing = vehicleMarkersRef.current[markerKey];
+
+    if (existing) {
+      existing.marker.setLatLng([update.lat, update.lng]);
+      existing.marker.setOpacity(1);
+      existing.lastSeen = now;
+    } else {
+      const marker = L.marker([update.lat, update.lng], { icon: pulsingIcon })
+        .addTo(map)
+        .bindPopup(label);
+
+      vehicleMarkersRef.current[markerKey] = { marker, lastSeen: now };
+    }
+  }
+
   function sendSocketPayload(payload: unknown) {
     const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
@@ -195,8 +249,28 @@ export default function HomePage() {
 
     const onOpen = () => {
       const active = subscriptionRef.current;
-      if (active.routeId && active.requestId) {
-        sendRouteSubscription("route.subscribe", active.routeId, active.requestId);
+      if (active.routeId) {
+        sendRouteSubscription("route.subscribe", active.routeId, nextRequestId());
+      }
+
+      const share = vehicleShareRef.current;
+      if (share.vehicleId) {
+        const token = getAccessToken();
+        if (token) {
+          sendSocketPayload({
+            type: "auth",
+            request_id: nextRequestId(),
+            payload: { token },
+          });
+          sendSocketPayload({
+            type: "vehicle.location.share",
+            request_id: nextRequestId(),
+            payload: {
+              vehicle_id: toRouteIdPayload(share.vehicleId),
+              enabled: true,
+            },
+          });
+        }
       }
     };
 
@@ -210,6 +284,19 @@ export default function HomePage() {
         if (payload?.type === "route.subscribe.ok") {
           const routeId = payload?.data?.route_id;
           console.log("Route subscription OK", { routeId, requestId: payload?.request_id });
+          return;
+        }
+        if (payload?.type === "vehicle.location.update" && payload?.data) {
+          handleVehicleLocationUpdate(payload.data);
+          return;
+        }
+        if (payload?.type === "error") {
+          if (payload?.data?.code === "UNAUTHORIZED") {
+            Toast.fire({ icon: "error", title: payload?.data?.message ?? "Unauthorized." });
+            stopVehicleShare();
+          } else {
+            Toast.fire({ icon: "error", title: payload?.data?.message ?? "Socket error." });
+          }
           return;
         }
         if (payload?.event === "locationUpdate" && Array.isArray(payload.data)) {
@@ -234,18 +321,140 @@ export default function HomePage() {
     const previous = subscriptionRef.current;
     if (previous.routeId === selectedRouteId) return;
 
-    if (previous.routeId && previous.requestId) {
-      sendRouteSubscription("route.unsubscribe", previous.routeId, previous.requestId);
+    if (previous.routeId) {
+      sendRouteSubscription("route.unsubscribe", previous.routeId, nextRequestId());
     }
 
     if (selectedRouteId) {
-      const requestId = nextRequestId();
-      subscriptionRef.current = { routeId: selectedRouteId, requestId };
-      sendRouteSubscription("route.subscribe", selectedRouteId, requestId);
+      subscriptionRef.current = { routeId: selectedRouteId };
+      sendRouteSubscription("route.subscribe", selectedRouteId, nextRequestId());
     } else {
-      subscriptionRef.current = { routeId: null, requestId: null };
+      subscriptionRef.current = { routeId: null };
     }
   }, [selectedRouteId]);
+
+  function startVehicleShare(vehicleId: number) {
+    const current = vehicleShareRef.current;
+
+    if (current.vehicleId === String(vehicleId)) {
+      stopVehicleShare();
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      Toast.fire({ icon: "error", title: "Geolocation is not available." });
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      Toast.fire({ icon: "error", title: "Authenticate first to share location." });
+      return;
+    }
+
+    if (current.vehicleId && current.vehicleId !== String(vehicleId)) {
+      stopVehicleShare();
+    }
+
+    vehicleShareRef.current = {
+      vehicleId: String(vehicleId),
+      intervalId: null,
+      watchId: null,
+      lastPosition: null,
+    };
+    setSharedVehicleId(vehicleId);
+
+    sendSocketPayload({
+      type: "auth",
+      request_id: nextRequestId(),
+      payload: { token },
+    });
+
+    sendSocketPayload({
+      type: "vehicle.location.share",
+      request_id: nextRequestId(),
+      payload: {
+        vehicle_id: vehicleId,
+        enabled: true,
+      },
+    });
+
+    if (vehicleShareRef.current.watchId === null) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          vehicleShareRef.current.lastPosition = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            heading: typeof pos.coords.heading === "number" ? pos.coords.heading : null,
+            speed: typeof pos.coords.speed === "number" ? pos.coords.speed : null,
+            accuracy: typeof pos.coords.accuracy === "number" ? pos.coords.accuracy : null,
+            recordedAt: new Date(pos.timestamp).toISOString(),
+          };
+        },
+        () => {
+          Toast.fire({ icon: "error", title: "Unable to read location." });
+          stopVehicleShare();
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000,
+        }
+      );
+      vehicleShareRef.current.watchId = watchId;
+    }
+
+    if (vehicleShareRef.current.intervalId === null) {
+      const intervalId = window.setInterval(() => {
+        const state = vehicleShareRef.current;
+        if (!state.vehicleId || !state.lastPosition) return;
+
+        sendSocketPayload({
+          type: "vehicle.location.broadcast",
+          request_id: nextRequestId(),
+          payload: {
+            vehicle_id: toRouteIdPayload(state.vehicleId),
+            lat: state.lastPosition.lat,
+            lng: state.lastPosition.lng,
+            heading: state.lastPosition.heading ?? 0,
+            speed_mps: state.lastPosition.speed ?? 0,
+            accuracy_m: state.lastPosition.accuracy ?? 0,
+            recorded_at: state.lastPosition.recordedAt,
+          },
+        });
+      }, 1000);
+      vehicleShareRef.current.intervalId = intervalId;
+    }
+  }
+
+  function stopVehicleShare() {
+    const current = vehicleShareRef.current;
+    if (current.vehicleId) {
+      sendSocketPayload({
+        type: "vehicle.location.share",
+        request_id: nextRequestId(),
+        payload: {
+          vehicle_id: toRouteIdPayload(current.vehicleId),
+          enabled: false,
+        },
+      });
+    }
+
+    if (current.intervalId !== null) {
+      window.clearInterval(current.intervalId);
+    }
+    if (current.watchId !== null) {
+      navigator.geolocation.clearWatch(current.watchId);
+    }
+
+    vehicleShareRef.current = {
+      vehicleId: null,
+      intervalId: null,
+      watchId: null,
+      lastPosition: null,
+    };
+    setSharedVehicleId(null);
+  }
 
   // Share / stop sharing location
   useEffect(() => {
@@ -299,6 +508,32 @@ export default function HomePage() {
       }
     };
   }, [sharing]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (!mapRef.current) return;
+      const { map } = mapRef.current;
+      const now = Date.now();
+
+      Object.entries(vehicleMarkersRef.current).forEach(([key, entry]) => {
+        const ageMs = now - entry.lastSeen;
+
+        if (ageMs > 60000) {
+          map.removeLayer(entry.marker);
+          delete vehicleMarkersRef.current[key];
+          return;
+        }
+
+        if (ageMs > 30000) {
+          entry.marker.setOpacity(0.35);
+        } else {
+          entry.marker.setOpacity(1);
+        }
+      });
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   return (
     <div className="relative h-screen w-screen">
@@ -384,7 +619,16 @@ export default function HomePage() {
               }}
             />
           ) : activePanel === "vehicles" ? (
-            <Vehicles />
+            <Vehicles
+              onShareVehicle={(vehicle) => {
+                if (!Number.isFinite(vehicle.vehicleId)) {
+                  Toast.fire({ icon: "error", title: "Vehicle ID is missing." });
+                  return;
+                }
+                startVehicleShare(vehicle.vehicleId);
+              }}
+              sharedVehicleId={sharedVehicleId}
+            />
           ) : activePanel === "nodes" ? (
             <Nodes />
           ) : activePanel === "routes" ? (

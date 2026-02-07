@@ -5,6 +5,8 @@ import type { VehicleRow, VehicleStatus } from "@/components/Vehicles";
 type VehiclesResponse = ApiResponse<RemoteVehicle[]>;
 
 type RemoteVehicle = {
+  id?: number | null;
+  vehicle_id?: number | null;
   plate_number: string;
   capacity?: number | null;
   type?: string | null;
@@ -24,8 +26,16 @@ function mapStatus(status?: string | null): VehicleStatus {
 }
 
 function mapVehicle(vehicle: RemoteVehicle): VehicleRow {
+  const vehicleId =
+    typeof vehicle.id === "number"
+      ? vehicle.id
+      : typeof vehicle.vehicle_id === "number"
+        ? vehicle.vehicle_id
+        : Number.NaN;
+
   return {
     id: vehicle.plate_number,
+    vehicleId,
     plateNumber: vehicle.plate_number,
     type: vehicle.type?.trim() || "unknown",
     capacity: typeof vehicle.capacity === "number" ? vehicle.capacity : null,

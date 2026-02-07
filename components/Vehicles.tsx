@@ -11,6 +11,7 @@ export type VehicleStatus = "active" | "idle" | "maintenance" | "offline" | "unk
 
 export type VehicleRow = {
   id: string;
+  vehicleId: number;
   plateNumber: string;
   type: string;
   capacity: number | null;
@@ -21,6 +22,8 @@ export type VehicleRow = {
 export interface VehiclesProps {
   title?: string;
   subtitle?: string;
+  onShareVehicle?: (vehicle: VehicleRow) => void;
+  sharedVehicleId?: number | null;
 }
 
 const statusPill: Record<VehicleStatus, string> = {
@@ -34,6 +37,8 @@ const statusPill: Record<VehicleStatus, string> = {
 export default function Vehicles({
   title = "Vehicle management",
   subtitle = "Fleet status, availability, and route assignments.",
+  onShareVehicle,
+  sharedVehicleId = null,
 }: VehiclesProps) {
   const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,9 +125,16 @@ export default function Vehicles({
       });
 
       if (created) {
+        const vehicleId =
+          typeof created.id === "number"
+            ? created.id
+            : typeof created.vehicle_id === "number"
+              ? created.vehicle_id
+              : Number.NaN;
         setVehicles((prev) => [
           {
             id: created.plate_number,
+            vehicleId,
             plateNumber: created.plate_number,
             type: created.type?.trim() || type,
             capacity: typeof created.capacity === "number" ? created.capacity : capacity,
@@ -135,6 +147,7 @@ export default function Vehicles({
         setVehicles((prev) => [
           {
             id: plateNumber,
+            vehicleId: Number.NaN,
             plateNumber,
             type,
             capacity,
@@ -289,10 +302,13 @@ export default function Vehicles({
                         <button
                           type="button"
                           className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-main-700 transition hover:bg-main-50"
-                          onClick={() => setOpenMenuId(null)}
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onShareVehicle?.(vehicle);
+                          }}
                         >
                           <i className="bi bi-share-fill" />
-                          Share
+                          {sharedVehicleId === vehicle.vehicleId ? "Stop sharing" : "Share"}
                         </button>
                         <button
                           type="button"
