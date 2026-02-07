@@ -20,7 +20,6 @@ import { clearAuth, logout, type AuthUser } from "@/services/auth";
 import { ApiError } from "@/services/apiClient";
 import { Toast } from "@/components/ui/Toast";
 import { getStoredUser } from "@/services/tokenStore";
-import socketIOClient from "socket.io-client";
 import { LocationData } from "@/types/socket";
 
 export default function HomePage() {
@@ -39,7 +38,7 @@ export default function HomePage() {
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const sharingRef = useRef(false);
   const routeLineRef = useRef<any>(null);
-  const socketRef = useRef<ReturnType<typeof socketIOClient> | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const isAdmin = currentUser?.role === "admin";
 
@@ -107,61 +106,79 @@ export default function HomePage() {
     }
   }, [activePanel, isAdmin]);
 
-  // Connect to Socket.IO
-  useEffect(() => {
-    const socket = socketIOClient(
-      process.env.NEXT_PUBLIC_SOCKET_URL!,
-      {
-        path: process.env.NEXT_PUBLIC_SOCKET_PATH!,
+  function handleLocationUpdate(locations: LocationData[]) {
+    if (!mapRef.current) return;
+
+    const { L, map, pulsingIcon } = mapRef.current;
+
+    // ---- 1. Build set of active userIds from payload ----
+    const activeIds = new Set(locations.map((l) => l.userId));
+
+    // ---- 2. Remove markers for users that are no longer in activeIds ----
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      if (!activeIds.has(id)) {
+        map.removeLayer(marker);
+        delete markersRef.current[id];
       }
-    );
-    socketRef.current = socket;
-
-    socket.on("locationUpdate", (locations: LocationData[]) => {
-      if (!mapRef.current) return;
-
-      const { L, map, pulsingIcon } = mapRef.current;
-
-      // ---- 1. Build set of active userIds from payload ----
-      const activeIds = new Set(locations.map((l) => l.userId));
-
-      // ---- 2. Remove markers for users that are no longer in activeIds ----
-      Object.entries(markersRef.current).forEach(([id, marker]) => {
-        if (!activeIds.has(id)) {
-          map.removeLayer(marker);
-          delete markersRef.current[id];
-        }
-      });
-
-      // ---- 3. Upsert markers for all locations in payload ----
-      locations.forEach((loc) => {
-        const isMe = loc.userId === userId.current;
-
-        // If it's me and I'm not sharing anymore, ensure my marker is gone
-        if (isMe && !sharingRef.current) {
-          const myMarker = markersRef.current[loc.userId];
-          if (myMarker) {
-            map.removeLayer(myMarker);
-            delete markersRef.current[loc.userId];
-          }
-          return; // do not recreate marker
-        }
-
-        if (markersRef.current[loc.userId]) {
-          markersRef.current[loc.userId].setLatLng([loc.lat, loc.lng]);
-        } else {
-          const marker = L.marker([loc.lat, loc.lng], { icon: pulsingIcon })
-            .addTo(map)
-            .bindPopup(`User: ${loc.userId}`);
-
-          markersRef.current[loc.userId] = marker;
-        }
-      });
     });
 
+    // ---- 3. Upsert markers for all locations in payload ----
+    locations.forEach((loc) => {
+      const isMe = loc.userId === userId.current;
+
+      // If it's me and I'm not sharing anymore, ensure my marker is gone
+      if (isMe && !sharingRef.current) {
+        const myMarker = markersRef.current[loc.userId];
+        if (myMarker) {
+          map.removeLayer(myMarker);
+          delete markersRef.current[loc.userId];
+        }
+        return; // do not recreate marker
+      }
+
+      if (markersRef.current[loc.userId]) {
+        markersRef.current[loc.userId].setLatLng([loc.lat, loc.lng]);
+      } else {
+        const marker = L.marker([loc.lat, loc.lng], { icon: pulsingIcon })
+          .addTo(map)
+          .bindPopup(`User: ${loc.userId}`);
+
+        markersRef.current[loc.userId] = marker;
+      }
+    });
+  }
+
+  function sendSocketEvent(event: string, data: unknown) {
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify({ event, data }));
+  }
+
+  // Connect to WebSocket
+  useEffect(() => {
+    const socket = new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!);
+    socketRef.current = socket;
+
+    const onMessage = (event: MessageEvent<string>) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (Array.isArray(payload)) {
+          handleLocationUpdate(payload);
+          return;
+        }
+        if (payload?.event === "locationUpdate" && Array.isArray(payload.data)) {
+          handleLocationUpdate(payload.data);
+        }
+      } catch {
+        // Ignore non-JSON or unexpected payloads
+      }
+    };
+
+    socket.addEventListener("message", onMessage);
+
     return () => {
-      socket.off("locationUpdate");
-      socket.disconnect();
+      socket.removeEventListener("message", onMessage);
+      socket.close();
     };
   }, []);
 
@@ -184,7 +201,7 @@ export default function HomePage() {
         }
       }
 
-      socketRef.current?.emit("stopSharing", { userId: userId.current });
+      sendSocketEvent("stopSharing", { userId: userId.current });
       return;
     }
 
@@ -193,7 +210,7 @@ export default function HomePage() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        socketRef.current?.emit("sendLocation", {
+        sendSocketEvent("sendLocation", {
           userId: userId.current,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
