@@ -40,6 +40,12 @@ export default function HomePage() {
   const routeLineRef = useRef<any>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const selectedRouteRef = useRef<string | null>(null);
+  const subscriptionRef = useRef<{ routeId: string | null; requestId: string | null }>({
+    routeId: null,
+    requestId: null,
+  });
+  const requestIdCounter = useRef(0);
   const isAdmin = currentUser?.role === "admin";
 
   const userId = useRef("user-" + Math.floor(Math.random() * 10000));
@@ -48,6 +54,10 @@ export default function HomePage() {
   useEffect(() => {
     sharingRef.current = sharing;
   }, [sharing]);
+
+  useEffect(() => {
+    selectedRouteRef.current = selectedRouteId;
+  }, [selectedRouteId]);
 
   function parseLineString(geometry: string): Array<[number, number]> | null {
     const match = geometry.match(/linestring\s*\((.+)\)/i);
@@ -89,6 +99,16 @@ export default function HomePage() {
     line.addTo(mapInstance);
     routeLineRef.current = line;
     mapInstance.fitBounds(line.getBounds(), { padding: [24, 24] });
+  }
+
+  function toRouteIdPayload(routeId: string) {
+    const numericId = Number(routeId);
+    return Number.isNaN(numericId) ? routeId : numericId;
+  }
+
+  function nextRequestId() {
+    requestIdCounter.current += 1;
+    return `rsub-${requestIdCounter.current}`;
   }
 
   useEffect(() => {
@@ -148,10 +168,24 @@ export default function HomePage() {
     });
   }
 
-  function sendSocketEvent(event: string, data: unknown) {
+  function sendSocketPayload(payload: unknown) {
     const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify({ event, data }));
+    socket.send(JSON.stringify(payload));
+  }
+
+  function sendSocketEvent(event: string, data: unknown) {
+    sendSocketPayload({ event, data });
+  }
+
+  function sendRouteSubscription(type: "route.subscribe" | "route.unsubscribe", routeId: string, requestId: string) {
+    sendSocketPayload({
+      type,
+      request_id: requestId,
+      payload: {
+        route_id: toRouteIdPayload(routeId),
+      },
+    });
   }
 
   // Connect to WebSocket
@@ -159,11 +193,23 @@ export default function HomePage() {
     const socket = new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!);
     socketRef.current = socket;
 
+    const onOpen = () => {
+      const active = subscriptionRef.current;
+      if (active.routeId && active.requestId) {
+        sendRouteSubscription("route.subscribe", active.routeId, active.requestId);
+      }
+    };
+
     const onMessage = (event: MessageEvent<string>) => {
       try {
         const payload = JSON.parse(event.data);
         if (Array.isArray(payload)) {
           handleLocationUpdate(payload);
+          return;
+        }
+        if (payload?.type === "route.subscribe.ok") {
+          const routeId = payload?.data?.route_id;
+          console.log("Route subscription OK", { routeId, requestId: payload?.request_id });
           return;
         }
         if (payload?.event === "locationUpdate" && Array.isArray(payload.data)) {
@@ -174,13 +220,32 @@ export default function HomePage() {
       }
     };
 
+    socket.addEventListener("open", onOpen);
     socket.addEventListener("message", onMessage);
 
     return () => {
+      socket.removeEventListener("open", onOpen);
       socket.removeEventListener("message", onMessage);
       socket.close();
     };
   }, []);
+
+  useEffect(() => {
+    const previous = subscriptionRef.current;
+    if (previous.routeId === selectedRouteId) return;
+
+    if (previous.routeId && previous.requestId) {
+      sendRouteSubscription("route.unsubscribe", previous.routeId, previous.requestId);
+    }
+
+    if (selectedRouteId) {
+      const requestId = nextRequestId();
+      subscriptionRef.current = { routeId: selectedRouteId, requestId };
+      sendRouteSubscription("route.subscribe", selectedRouteId, requestId);
+    } else {
+      subscriptionRef.current = { routeId: null, requestId: null };
+    }
+  }, [selectedRouteId]);
 
   // Share / stop sharing location
   useEffect(() => {

@@ -41,12 +41,12 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const url = buildUrl(path);
   const accessToken = getAccessToken();
-  const authHeader =
+  const authHeader: Record<string, string> =
     accessToken && !("Authorization" in (init.headers ?? {}))
       ? { Authorization: `Bearer ${accessToken}` }
       : {};
 
-  const headers = {
+  const headers: HeadersInit = {
     ...DEFAULT_HEADERS,
     ...(init.headers ?? {}),
     ...authHeader,
