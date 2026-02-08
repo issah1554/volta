@@ -141,14 +141,9 @@ export default function Routes({
     <section className="flex h-full w-full flex-col text-slate-800">
       {/* Header */}
       {showActions ? (
-        <header className="mb-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4  backdrop-blur supports-backdrop-filter:bg-white/60">
+        <header className="mb-3 p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-              {subtitle ? (
-                <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
-              ) : null}
-            </div>
+            <div className="min-w-0"></div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <button
