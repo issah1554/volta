@@ -194,7 +194,6 @@ export default function Routes({
           No routes match &quot;{searchQuery.trim()}&quot;.
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
           <ul className="divide-y divide-slate-200">
             {visibleRoutes.map((route) => {
               const isSelected = selectedRouteId === route.id;
@@ -202,9 +201,7 @@ export default function Routes({
               return (
                 <li key={route.id}>
                   <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onRouteSelect?.(route)}
+                    role="button" tabIndex={0} onClick={() => onRouteSelect?.(route)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
@@ -212,7 +209,7 @@ export default function Routes({
                       }
                     }}
                     className={[
-                      "group relative flex items-center gap-3 px-4 py-3 text-left transition",
+                      "group relative flex items-center gap-3 px-4 py-5 text-left transition",
                       "hover:cursor-pointer",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60",
                       "hover:bg-primary-50",
@@ -305,7 +302,6 @@ export default function Routes({
               );
             })}
           </ul>
-        </div>
       )}
     </section>
   );

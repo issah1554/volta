@@ -8,7 +8,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/vlogo.png" sizes="any" />
+        <link rel="icon" href="/blue-bolt.jpeg" sizes="any" />
 
         <link
           rel="stylesheet"

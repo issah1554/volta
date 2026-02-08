@@ -57,7 +57,7 @@ export default function RightSideBar({
   }, []);
 
   const baseBtn =
-    "grid h-10 w-10 place-items-center bg-white text-slate-800 shadow-md ring-1 ring-slate-200 hover:bg-slate-50 active:translate-y-px active:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50";
+    "grid h-10 w-10 place-items-center bg-white text-slate-800 shadow-md  hover:bg-slate-50 active:translate-y-px active:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     // Tailwind-only layout (no leaflet control classes)
@@ -118,7 +118,7 @@ export default function RightSideBar({
           <i className="bi bi-stack text-lg" />
         </button>
         {layersOpen && (
-          <div className="absolute right-full top-1/2 mr-2 w-40 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 text-xs shadow-xl backdrop-blur-md">
+          <div className="absolute right-full top-1/2 mr-2 w-40 -translate-y-1/2 rounded-xl  bg-white/90 p-2 text-xs shadow-xl backdrop-blur-md">
             <button
               type="button"
               className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-white/80 ${baseLayer === "street" ? "text-primary" : "text-main-800"
@@ -133,7 +133,7 @@ export default function RightSideBar({
             </button>
             <button
               type="button"
-              className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-white/80 ${baseLayer === "satellite" ? "text-primary" : "text-main-800"
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 border-0 text-left transition hover:bg-white/80 ${baseLayer === "satellite" ? "text-primary" : "text-main-800"
                 }`}
               onClick={() => {
                 onBaseLayerChange?.("satellite");
@@ -185,7 +185,7 @@ export default function RightSideBar({
           <i className={`${isLoggedIn ? "bi bi-person-fill text-lg text-primary" : "bi bi-person text-lg "}`} />
         </button>
         {accountOpen && (
-          <div className="absolute right-full top-1/2 mr-2 w-56 -translate-y-1/2 rounded-xl border border-white/40 bg-white/90 p-2 shadow-xl backdrop-blur-md">
+          <div className="absolute right-full top-1/2 mr-2 w-56 -translate-y-1/2 rounded-xl  bg-white/90 p-2 shadow-xl backdrop-blur-md">
             {!isLoggedIn ? (
               <div className="space-y-1">
                 <button

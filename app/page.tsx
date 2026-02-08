@@ -611,63 +611,79 @@ export default function HomePage() {
       {activePanel && (
         <MainPanel title={activePanel} onClose={() => setActivePanel(null)}>
           {activePanel === "dash" ? (
-            <Dashboard />
+            <div className="p-4">
+              <Dashboard />
+            </div>
           ) : activePanel === "users" ? (
-            <UserManagement
-              onViewProfile={(user) => {
-                setSelectedUser(user);
-                setActivePanel("user-profile");
-              }}
-            />
+            <div className="p-4">
+              <UserManagement
+                onViewProfile={(user) => {
+                  setSelectedUser(user);
+                  setActivePanel("user-profile");
+                }}
+              />
+            </div>
           ) : activePanel === "user-profile" && selectedUser ? (
-            <UserProfile
-              user={selectedUser}
-              onBack={() => {
-                setActivePanel("users");
-              }}
-            />
+            <div className="p-4">
+              <UserProfile
+                user={selectedUser}
+                onBack={() => {
+                  setActivePanel("users");
+                }}
+              />
+            </div>
           ) : activePanel === "vehicles" ? (
-            <Vehicles
-              onShareVehicle={(vehicle) => {
-                if (!Number.isFinite(vehicle.vehicleId)) {
-                  Toast.fire({ icon: "error", title: "Vehicle ID is missing." });
-                  return;
-                }
-                startVehicleShare(vehicle.vehicleId);
-              }}
-              sharedVehicleId={sharedVehicleId}
-            />
+            <div className="p-4">
+              <Vehicles
+                onShareVehicle={(vehicle) => {
+                  if (!Number.isFinite(vehicle.vehicleId)) {
+                    Toast.fire({ icon: "error", title: "Vehicle ID is missing." });
+                    return;
+                  }
+                  startVehicleShare(vehicle.vehicleId);
+                }}
+                sharedVehicleId={sharedVehicleId}
+              />
+            </div>
           ) : activePanel === "nodes" ? (
-            <Nodes />
+            <div className="p-4">
+              <Nodes />
+            </div>
           ) : activePanel === "routes" ? (
-            <Routes
-              searchQuery={routeSearch}
-              showActions={isAdmin}
-              selectedRouteId={selectedRouteId}
-              onRouteSelect={(route) => {
-                setSelectedRouteId(route.id);
-                showRouteLine(route.geometry ?? null);
-              }}
-            />
+            <div className="p-0">
+              <Routes
+                searchQuery={routeSearch}
+                showActions={isAdmin}
+                selectedRouteId={selectedRouteId}
+                onRouteSelect={(route) => {
+                  setSelectedRouteId(route.id);
+                  showRouteLine(route.geometry ?? null);
+                }}
+              />
+            </div>
           ) : activePanel === "login" || activePanel === "register" ? (
             activePanel === "login" ? (
-              <LoginForm
-                onSubmit={(user) => {
-                  setIsLoggedIn(true);
-                  setCurrentUser(user ?? null);
-                  setActivePanel(null);
-                }}
-              />
+              <div className="p-4">
+                <LoginForm
+                  onSubmit={(user) => {
+                    setIsLoggedIn(true);
+                    setCurrentUser(user ?? null);
+                    setActivePanel(null);
+                  }}
+                />
+              </div>
             ) : (
-              <RegisterForm
-                onSubmit={() => {
-                  setIsLoggedIn(true);
-                  setActivePanel(null);
-                }}
-              />
+              <div className="p-4">
+                <RegisterForm
+                  onSubmit={() => {
+                    setIsLoggedIn(true);
+                    setActivePanel(null);
+                  }}
+                />
+              </div>
             )
           ) : (
-            <div className="text-sm text-main-700">
+            <div className="p-4 text-sm text-main-700">
               Add content here.
             </div>
           )}
