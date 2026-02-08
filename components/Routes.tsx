@@ -194,7 +194,7 @@ export default function Routes({
           No routes match &quot;{searchQuery.trim()}&quot;.
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-slate-200 bg-white ">
+        <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
           <ul className="divide-y divide-slate-200">
             {visibleRoutes.map((route) => {
               const isSelected = selectedRouteId === route.id;
@@ -213,9 +213,10 @@ export default function Routes({
                     }}
                     className={[
                       "group relative flex items-center gap-3 px-4 py-3 text-left transition",
+                      "hover:cursor-pointer",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60",
-                      "hover:bg-slate-50",
-                      isSelected ? "bg-indigo-50/70" : "",
+                      "hover:bg-primary-50",
+                      isSelected ? "bg-primary-100" : "",
                     ].join(" ")}
                   >
                     {/* Selected indicator */}

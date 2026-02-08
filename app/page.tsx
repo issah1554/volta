@@ -325,6 +325,14 @@ export default function HomePage() {
       sendRouteSubscription("route.unsubscribe", previous.routeId, nextRequestId());
     }
 
+    if (mapRef.current) {
+      const { map } = mapRef.current;
+      Object.values(vehicleMarkersRef.current).forEach((entry) => {
+        map.removeLayer(entry.marker);
+      });
+      vehicleMarkersRef.current = {};
+    }
+
     if (selectedRouteId) {
       subscriptionRef.current = { routeId: selectedRouteId };
       sendRouteSubscription("route.subscribe", selectedRouteId, nextRequestId());
