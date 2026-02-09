@@ -598,7 +598,7 @@ export default function HomePage() {
           }
           const allowedPanels = isAdmin
             ? ["dash", "users", "vehicles", "routes", "nodes"]
-            : ["dash", "vehicles"];
+            : ["dash", "vehicles", "routes"];
 
           if (allowedPanels.includes(label)) {
             setActivePanel(label as "dash" | "users" | "vehicles" | "routes" | "nodes");

@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@/services/apiClient";
 import { createVehicle, deleteVehicle, fetchVehicles } from "@/services/vehicles";
+import { fetchRoutes } from "@/services/routes";
+import type { RouteRow } from "@/components/Routes";
 import Swal from "sweetalert2";
 import { Toast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
 
-export type VehicleStatus = "active" | "idle" | "maintenance" | "offline" | "unknown";
+export type VehicleStatus = "active" | "inactive" | "maintenance" | "unknown";
 
 export type VehicleRow = {
   id: string;
@@ -28,9 +30,8 @@ export interface VehiclesProps {
 
 const statusPill: Record<VehicleStatus, string> = {
   active: "bg-success-50 text-success-700 border-success-200",
-  idle: "bg-warning-50 text-warning-700 border-warning-200",
+  inactive: "bg-warning-50 text-warning-700 border-warning-200",
   maintenance: "bg-info-50 text-info-700 border-info-200",
-  offline: "bg-danger-50 text-danger-700 border-danger-200",
   unknown: "bg-main-100 text-main-700 border-main-200",
 };
 
@@ -47,12 +48,42 @@ export default function Vehicles({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [routes, setRoutes] = useState<RouteRow[]>([]);
+  const [isRoutesLoading, setIsRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
     plateNumber: "",
     capacity: "",
     type: "",
+    routeId: "",
     status: "active",
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsRoutesLoading(true);
+    setRoutesError(null);
+
+    fetchRoutes()
+      .then((data) => {
+        if (!isMounted) return;
+        setRoutes(data);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        const message =
+          err instanceof ApiError ? err.message : "Unable to load routes right now.";
+        setRoutesError(message);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsRoutesLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,8 +128,14 @@ export default function Vehicles({
       plateNumber: "",
       capacity: "",
       type: "",
+      routeId: "",
       status: "active",
     });
+  }
+
+  function toRouteIdPayload(routeId: string) {
+    const numericId = Number(routeId);
+    return Number.isNaN(numericId) ? routeId : numericId;
   }
 
   async function handleCreateSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -109,8 +146,9 @@ export default function Vehicles({
     const type = formValues.type.trim();
     const capacity = Number(formValues.capacity);
     const status = formValues.status;
+    const routeId = formValues.routeId.trim();
 
-    if (!plateNumber || !type || !Number.isFinite(capacity)) {
+    if (!plateNumber || !type || !Number.isFinite(capacity) || !routeId) {
       Toast.fire({ icon: "error", title: "Fill all fields with valid values." });
       return;
     }
@@ -122,6 +160,7 @@ export default function Vehicles({
         capacity,
         type,
         status,
+        route_id: toRouteIdPayload(routeId),
       });
 
       if (created) {
@@ -400,16 +439,43 @@ export default function Vehicles({
           </label>
           <label className="grid gap-1 text-xs text-main-600">
             Type
-            <input
-              type="text"
+            <select
               value={formValues.type}
               onChange={(event) =>
                 setFormValues((prev) => ({ ...prev, type: event.target.value }))
               }
               className="rounded-xl border border-main-200 bg-white px-3 py-2 text-sm text-main-900 focus:border-primary-400 focus:outline-none"
-              placeholder="daladala"
               required
-            />
+            >
+              <option value="">Select type</option>
+              <option value="daladala">daladala</option>
+              <option value="bajaji">bajaji</option>
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs text-main-600">
+            Route
+            <select
+              value={formValues.routeId}
+              onChange={(event) =>
+                setFormValues((prev) => ({ ...prev, routeId: event.target.value }))
+              }
+              className="rounded-xl border border-main-200 bg-white px-3 py-2 text-sm text-main-900 focus:border-primary-400 focus:outline-none"
+              required
+              disabled={isRoutesLoading || routes.length === 0}
+            >
+              <option value="">
+                {isRoutesLoading ? "Loading routes..." : "Select a route"}
+              </option>
+              {routes.map((route) => (
+                <option key={route.id} value={route.id}>
+                  {route.name}
+                  {route.code ? ` (${route.code})` : ""}
+                </option>
+              ))}
+            </select>
+            {routesError ? (
+              <span className="text-[11px] text-danger-600">{routesError}</span>
+            ) : null}
           </label>
           <label className="grid gap-1 text-xs text-main-600">
             Status
@@ -421,9 +487,8 @@ export default function Vehicles({
               className="rounded-xl border border-main-200 bg-white px-3 py-2 text-sm text-main-900 focus:border-primary-400 focus:outline-none"
             >
               <option value="active">active</option>
-              <option value="idle">idle</option>
+              <option value="inactive">inactive</option>
               <option value="maintenance">maintenance</option>
-              <option value="offline">offline</option>
             </select>
           </label>
           <div className="mt-2 flex items-center justify-end gap-2">

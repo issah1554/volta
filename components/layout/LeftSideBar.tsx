@@ -20,7 +20,7 @@ const menuItems = [
 ];
 
 const adminLabels = new Set(["dash", "users", "vehicles", "nodes", "routes"]);
-const nonAdminLoggedInLabels = new Set(["dash", "vehicles", "help", "support", "contacts"]);
+const nonAdminLoggedInLabels = new Set(["dash", "vehicles", "routes", "help", "support", "contacts"]);
 const nonLoggedInLabels = new Set(["routes", "help", "support", "contacts"]);
 
 export default function LeftSideBar({

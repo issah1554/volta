@@ -14,7 +14,7 @@ type RemoteVehicle = {
   created_at?: string | null;
 };
 
-const knownStatuses = new Set(["active", "idle", "maintenance", "offline"]);
+const knownStatuses = new Set(["active", "inactive", "maintenance"]);
 
 function mapStatus(status?: string | null): VehicleStatus {
   if (!status) return "unknown";
@@ -62,6 +62,7 @@ export type CreateVehiclePayload = {
   capacity: number;
   type: string;
   status: string;
+  route_id: number | string;
 };
 
 export async function createVehicle(payload: CreateVehiclePayload): Promise<RemoteVehicle | null> {
