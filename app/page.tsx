@@ -77,10 +77,8 @@ export default function HomePage() {
     selectedRouteRef.current = selectedRouteId;
   }, [selectedRouteId]);
 
-  function parseLineString(geometry: string): Array<[number, number]> | null {
-    const match = geometry.match(/linestring\s*\((.+)\)/i);
-    if (!match) return null;
-    const pairs = match[1].split(",");
+  function parseLineStringPairs(pairsText: string): Array<[number, number]> {
+    const pairs = pairsText.split(",");
     const coords: Array<[number, number]> = [];
 
     for (const pair of pairs) {
@@ -92,6 +90,55 @@ export default function HomePage() {
       coords.push([lat, lng]);
     }
 
+    return coords;
+  }
+
+  function parseMultiLineString(geometry: string): Array<Array<[number, number]>> | null {
+    const match = geometry.match(/multilinestring\s*\(\s*(.+)\s*\)\s*$/i);
+    if (!match) return null;
+
+    const body = match[1].trim();
+    const segments: string[] = [];
+    let depth = 0;
+    let current = "";
+
+    for (const char of body) {
+      if (char === "(") {
+        depth += 1;
+        current += char;
+        continue;
+      }
+      if (char === ")") {
+        depth -= 1;
+        current += char;
+        continue;
+      }
+      if (char === "," && depth === 0) {
+        if (current.trim()) segments.push(current.trim());
+        current = "";
+        continue;
+      }
+      current += char;
+    }
+
+    if (current.trim()) segments.push(current.trim());
+
+    const lines = segments
+      .map((segment) => {
+        const trimmed = segment.trim();
+        const inner =
+          trimmed.startsWith("(") && trimmed.endsWith(")") ? trimmed.slice(1, -1) : trimmed;
+        return parseLineStringPairs(inner);
+      })
+      .filter((line) => line.length > 0);
+
+    return lines.length ? lines : null;
+  }
+
+  function parseLineString(geometry: string): Array<[number, number]> | null {
+    const match = geometry.match(/linestring\s*\(\s*(.+)\s*\)\s*$/i);
+    if (!match) return null;
+    const coords = parseLineStringPairs(match[1]);
     return coords.length ? coords : null;
   }
 
@@ -106,7 +153,9 @@ export default function HomePage() {
     }
 
     if (!geometry) return;
-    const coords = parseLineString(geometry);
+    const multilineCoords = parseMultiLineString(geometry);
+    const singleLineCoords = multilineCoords ? null : parseLineString(geometry);
+    const coords = multilineCoords ?? (singleLineCoords ? [singleLineCoords] : null);
     if (!coords) return;
 
     const line = L.polyline(coords, {
